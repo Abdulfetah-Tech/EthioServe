@@ -10,11 +10,11 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Logging
 builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
-    .Enrich.FromLogContext());
+    .Enrich.FromLogContext()
+    .WriteTo.Console());
 
 // Layers
 builder.Services.AddApplication();
@@ -57,9 +57,9 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseSerilogRequestLogging();
 
 app.Use(async (context, next) =>
 {
