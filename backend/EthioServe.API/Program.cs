@@ -5,6 +5,7 @@ using EthioServe.Application;
 using EthioServe.Infrastructure;
 using EthioServe.Infrastructure.Persistence;
 using Microsoft.AspNetCore.RateLimiting;
+using EthioServe.Infrastructure.Persistence.Seed;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -57,6 +58,13 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    // Development convenience: apply migrations and seed reference data. Production uses an explicit migration step.
+    await app.Services.InitializeDatabaseAsync();
+}
+
+
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -73,12 +81,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
-
-    // TEMPORARY: lets us see the ProblemDetails format. Replaced by a real test in Step 1.6.
-    app.MapGet("/debug/not-found", () =>
-    {
-        throw new EthioServe.Application.Common.Exceptions.NotFoundException("Demo resource was not found.");
-    });
 }
 else
 {
