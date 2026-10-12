@@ -37,9 +37,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(p => p.ServiceRequestId).HasDatabaseName("ix_payments_service_request_id");
 
         // A request can be paid only once (MVP rule enforced by the database).
-        builder.HasIndex(p => p.ServiceRequestId, "ux_payments_one_completed_per_request")
+               builder.HasIndex(p => p.ServiceRequestId, "ux_payments_one_completed_per_request")
+            .HasDatabaseName("ux_payments_one_completed_per_request")
             .IsUnique().HasFilter("status = 'Completed'");
-
+            
         builder.HasIndex(p => new { p.ProviderId, p.Status }).HasDatabaseName("ix_payments_provider_status");
         builder.HasIndex(p => new { p.CustomerId, p.CreatedAt }).HasDatabaseName("ix_payments_customer_created");
     }

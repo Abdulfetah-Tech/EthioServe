@@ -29,9 +29,11 @@ public sealed class QuoteConfiguration : IEntityTypeConfiguration<Quote>
 
         // The database itself guarantees a request can never have two accepted quotes,
         // and a provider can only have one open quote per request (even under concurrent requests).
-        builder.HasIndex(q => q.ServiceRequestId, "ux_quotes_one_accepted_per_request")
+               builder.HasIndex(q => q.ServiceRequestId, "ux_quotes_one_accepted_per_request")
+            .HasDatabaseName("ux_quotes_one_accepted_per_request")
             .IsUnique().HasFilter("status = 'Accepted'");
         builder.HasIndex(q => new { q.ServiceRequestId, q.ProviderId }, "ux_quotes_one_pending_per_provider")
+            .HasDatabaseName("ux_quotes_one_pending_per_provider")
             .IsUnique().HasFilter("status = 'Pending'");
 
         builder.HasIndex(q => new { q.ProviderId, q.Status }).HasDatabaseName("ix_quotes_provider_status");

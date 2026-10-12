@@ -26,9 +26,10 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
         builder.HasOne<ProviderProfile>().WithMany().HasForeignKey(a => a.ProviderId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<CustomerProfile>().WithMany().HasForeignKey(a => a.CustomerId).OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => a.ServiceRequestId).HasDatabaseName("ix_appointments_service_request_id");
-        builder.HasIndex(a => a.ServiceRequestId, "ux_appointments_one_active_per_request")
+               builder.HasIndex(a => a.ServiceRequestId, "ux_appointments_one_active_per_request")
+            .HasDatabaseName("ux_appointments_one_active_per_request")
             .IsUnique().HasFilter("status NOT IN ('Cancelled', 'NoShow')");
+            
         builder.HasIndex(a => new { a.ProviderId, a.StartAt }).HasDatabaseName("ix_appointments_provider_start");
         builder.HasIndex(a => new { a.CustomerId, a.StartAt }).HasDatabaseName("ix_appointments_customer_start");
     }

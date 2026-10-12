@@ -90,9 +90,6 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                     b.HasIndex("QuoteId")
                         .HasDatabaseName("ix_appointments_quote_id");
 
-                    b.HasIndex("ServiceRequestId")
-                        .HasDatabaseName("ix_appointments_service_request_id");
-
                     b.HasIndex("CustomerId", "StartAt")
                         .HasDatabaseName("ix_appointments_customer_start");
 
@@ -101,7 +98,7 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
 
                     b.HasIndex(new[] { "ServiceRequestId" }, "ux_appointments_one_active_per_request")
                         .IsUnique()
-                        .HasDatabaseName("ix_appointments_service_request_id1")
+                        .HasDatabaseName("ux_appointments_one_active_per_request")
                         .HasFilter("status NOT IN ('Cancelled', 'NoShow')");
 
                     b.ToTable("appointments", null, t =>
@@ -457,7 +454,7 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
 
                     b.HasIndex(new[] { "ServiceRequestId" }, "ux_payments_one_completed_per_request")
                         .IsUnique()
-                        .HasDatabaseName("ix_payments_service_request_id1")
+                        .HasDatabaseName("ux_payments_one_completed_per_request")
                         .HasFilter("status = 'Completed'");
 
                     b.ToTable("payments", null, t =>
@@ -793,12 +790,12 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
 
                     b.HasIndex(new[] { "ServiceRequestId" }, "ux_quotes_one_accepted_per_request")
                         .IsUnique()
-                        .HasDatabaseName("ix_quotes_service_request_id1")
+                        .HasDatabaseName("ux_quotes_one_accepted_per_request")
                         .HasFilter("status = 'Accepted'");
 
                     b.HasIndex(new[] { "ServiceRequestId", "ProviderId" }, "ux_quotes_one_pending_per_provider")
                         .IsUnique()
-                        .HasDatabaseName("ix_quotes_service_request_id_provider_id")
+                        .HasDatabaseName("ux_quotes_one_pending_per_provider")
                         .HasFilter("status = 'Pending'");
 
                     b.ToTable("quotes", null, t =>
