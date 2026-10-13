@@ -1,4 +1,5 @@
 using EthioServe.Application.Abstractions;
+using EthioServe.Infrastructure.Identity;
 using EthioServe.Infrastructure.Persistence;
 using EthioServe.Infrastructure.Time;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,14 @@ public static class DependencyInjection
             .UseSnakeCaseNamingConvention());
 
         services.AddSingleton<IClock, SystemClock>();
+
+        // Fails fast at startup if the JWT settings are missing or invalid (for example, no signing key).
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddSingleton<ITokenService, JwtTokenService>();
 
         return services;
     }

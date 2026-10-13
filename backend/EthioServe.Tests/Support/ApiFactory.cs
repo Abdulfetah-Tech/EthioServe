@@ -17,6 +17,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         // Environment variables are loaded before Program.cs runs its own code and take precedence over
         // user-secrets, so these tests can never touch your development database.
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _postgres.GetConnectionString());
+        Environment.SetEnvironmentVariable("Jwt__SigningKey", "integration-test-signing-key-0123456789-abcdef");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

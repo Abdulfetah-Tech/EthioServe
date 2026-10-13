@@ -44,7 +44,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Identity's own mapping must come first; we then rename its tables to snake_case.
