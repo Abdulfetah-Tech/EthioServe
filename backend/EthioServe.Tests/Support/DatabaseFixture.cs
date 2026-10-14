@@ -21,9 +21,10 @@ public sealed class DatabaseFixture : IAsyncLifetime
         await using var db = CreateContext();
         await db.Database.MigrateAsync();
     }
-
+    public string ConnectionString => _postgres.GetConnectionString();
     public AppDbContext CreateContext(IClock? clock = null)
     {
+        
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(_postgres.GetConnectionString())
             .UseSnakeCaseNamingConvention()

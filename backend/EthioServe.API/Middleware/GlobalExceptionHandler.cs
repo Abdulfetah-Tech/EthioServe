@@ -1,5 +1,6 @@
 using EthioServe.Application.Common.Exceptions;
 using EthioServe.Domain.Common;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,8 @@ public sealed class GlobalExceptionHandler(
 
         var (status, title) = exception switch
         {
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Authentication failed"),
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Access denied"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
@@ -43,11 +46,14 @@ public sealed class GlobalExceptionHandler(
 
         httpContext.Response.StatusCode = status;
 
-        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = httpContext,
-            Exception = exception,
-            ProblemDetails = new ProblemDetails
+        ProblemDetails problem = exception is ValidationException validation
+            ? new HttpValidationProblemDetails(ToErrors(validation))
+            {
+                Status = status,
+                Title = title,
+                Detail = "One or more validation errors occurred."
+            }
+            : new ProblemDetails
             {
                 Status = status,
                 Title = title,
@@ -55,7 +61,18 @@ public sealed class GlobalExceptionHandler(
                 Detail = status == StatusCodes.Status500InternalServerError
                     ? "Something went wrong on our side. Please try again later."
                     : exception.Message
-            }
+            };
+
+        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            Exception = exception,
+            ProblemDetails = problem
         });
     }
+
+    private static Dictionary<string, string[]> ToErrors(ValidationException exception) =>
+        exception.Errors
+            .GroupBy(e => e.PropertyName)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).Distinct().ToArray());
 }

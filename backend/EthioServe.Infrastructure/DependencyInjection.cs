@@ -1,7 +1,9 @@
 using EthioServe.Application.Abstractions;
+using EthioServe.Application.Auth;
 using EthioServe.Infrastructure.Identity;
 using EthioServe.Infrastructure.Persistence;
 using EthioServe.Infrastructure.Time;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,25 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddSingleton<ITokenService, JwtTokenService>();
+
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+
+                options.Password.RequiredLength = PasswordPolicy.MinLength;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<AppDbContext>();
+
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
