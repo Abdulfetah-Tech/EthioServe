@@ -10,5 +10,5 @@
   "include": [
     "src/**/*.d.ts",
     "src/**/*.spec.ts"
-  ]
+, "src/app/core/auth/role-home.ts", "src/app/core/auth/safe-url.ts", "src/app/core/auth/validators.ts"  ]
 }

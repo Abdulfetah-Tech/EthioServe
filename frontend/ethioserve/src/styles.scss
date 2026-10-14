@@ -1,1 +1,129 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-text: #1b1f24;
+  --color-muted: #5d6673;
+  --color-border: #d8dde3;
+  --color-primary: #0b7a3e;
+  --color-primary-hover: #086131;
+  --color-primary-text: #ffffff;
+  --color-danger: #b42318;
+  --color-danger-bg: #fdecea;
+  --color-success: #0b6b38;
+  --color-success-bg: #e6f4ea;
+  --radius: 10px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #12161a;
+    --color-surface: #1b2127;
+    --color-text: #eef1f4;
+    --color-muted: #a3adb8;
+    --color-border: #313a44;
+    --color-primary: #2fb36a;
+    --color-primary-hover: #38c377;
+    --color-primary-text: #06210f;
+    --color-danger: #ff8a80;
+    --color-danger-bg: #3a1a18;
+    --color-success: #6fd69a;
+    --color-success-bg: #14301f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+h1 { font-size: 1.75rem; margin: 0 0 0.5rem; }
+a { color: var(--color-primary); }
+main { flex: 1; padding-top: 2rem; padding-bottom: 2rem; }
+.container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 1rem; }
+.muted { color: var(--color-muted); }
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  &:focus { left: 1rem; top: 1rem; z-index: 10; background: var(--color-surface); padding: 0.5rem 1rem; }
+}
+
+.site-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  .header-inner { display: flex; align-items: center; justify-content: space-between; min-height: 60px; gap: 1rem; }
+  nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  nav a:not(.btn) { text-decoration: none; font-weight: 500; }
+  nav a.active { text-decoration: underline; }
+  .brand { font-weight: 700; font-size: 1.25rem; text-decoration: none; }
+  .user-name { color: var(--color-muted); }
+}
+
+.site-footer { padding-top: 1rem; padding-bottom: 1.5rem; color: var(--color-muted); }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.narrow { max-width: 520px; margin: 0 auto; }
+
+.hero { text-align: center; padding: 3rem 1rem; }
+.hero h1 { font-size: 2.25rem; }
+.hero-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+
+.field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+label { font-weight: 600; font-size: 0.95rem; }
+input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+input:focus-visible, .btn:focus-visible, a:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+input[aria-invalid='true'] { border-color: var(--color-danger); }
+.hint { color: var(--color-muted); font-size: 0.85rem; margin: 0; }
+.field-error { color: var(--color-danger); font-size: 0.85rem; margin: 0; }
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-primary { background: var(--color-primary); color: var(--color-primary-text); }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn-secondary { background: transparent; border-color: var(--color-border); color: var(--color-text); }
+.btn-ghost { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+.btn-block { width: 100%; }
+
+.alert { padding: 0.75rem 1rem; border-radius: 8px; margin: 0 0 1rem; }
+.alert-error { background: var(--color-danger-bg); color: var(--color-danger); }
+.alert-success { background: var(--color-success-bg); color: var(--color-success); }
+.form-links { display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem; }
