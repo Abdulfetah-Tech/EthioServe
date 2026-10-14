@@ -8,6 +8,8 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace EthioServe.Infrastructure.Identity;
@@ -17,9 +19,14 @@ public sealed class AuthService(
     AppDbContext db,
     ITokenService tokens,
     IClock clock,
+    IEmailService email,
+    IOptions<AppOptions> appOptions,
+    ILogger<AuthService> logger,
     IValidator<RegisterCustomerRequest> customerValidator,
     IValidator<RegisterProviderRequest> providerValidator,
-    IValidator<LoginRequest> loginValidator) : IAuthService
+    IValidator<LoginRequest> loginValidator,
+    IValidator<ForgotPasswordRequest> forgotValidator,
+    IValidator<ResetPasswordRequest> resetValidator) : IAuthService
 {
     private const string InvalidCredentials = "Invalid email or password.";
     private const string LockedOut = "Too many failed attempts. The account is temporarily locked; try again later.";
@@ -208,6 +215,116 @@ public sealed class AuthService(
 
         return await BuildCurrentUserAsync(user, ct);
     }
+
+    public async Task RequestPasswordResetAsync(ForgotPasswordRequest request, ClientInfo client, CancellationToken ct = default)
+    {
+        await forgotValidator.ValidateAndThrowAsync(request, ct);
+
+        var user = await userManager.FindByEmailAsync(request.Email.Trim());
+
+        // Same outward behaviour whether or not the account exists, so this endpoint cannot reveal who is registered.
+        if (user is null || user.IsSuspended)
+        {
+            return;
+        }
+
+        var now = clock.UtcNow;
+        var settings = appOptions.Value;
+
+        // Only the newest link works.
+        await db.PasswordResetTokens
+            .Where(t => t.UserId == user.Id && t.UsedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.UsedAt, (DateTimeOffset?)now), ct);
+
+        var token = tokens.CreateOpaqueToken();
+        db.PasswordResetTokens.Add(new PasswordResetToken(
+            user.Id, tokens.HashRefreshToken(token), now.AddMinutes(settings.PasswordResetTokenMinutes), client.IpAddress));
+        await db.SaveChangesAsync(ct);
+
+        var link = $"{settings.FrontendBaseUrl.TrimEnd('/')}/reset-password?token={token}";
+        var message = new EmailMessage(
+            user.Email!, "Reset your EthioServe password", BuildResetBody(link, settings.PasswordResetTokenMinutes));
+
+        try
+        {
+            await email.SendAsync(message, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A failing mail provider must not produce a different response for registered emails.
+            logger.LogError(ex, "Could not send a password reset email.");
+        }
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+    {
+        await resetValidator.ValidateAndThrowAsync(request, ct);
+
+        var now = clock.UtcNow;
+        var hash = tokens.HashRefreshToken(request.Token);
+        var stored = await db.PasswordResetTokens.AsNoTracking().SingleOrDefaultAsync(t => t.TokenHash == hash, ct);
+
+        if (stored is null || !stored.IsUsable(now))
+        {
+            throw InvalidResetLink();
+        }
+
+        var user = await userManager.FindByIdAsync(stored.UserId.ToString());
+        if (user is null || user.IsSuspended)
+        {
+            throw InvalidResetLink();
+        }
+
+        // Check the new password against Identity's rules BEFORE the link is consumed, so a weak password can be corrected.
+        foreach (var validator in userManager.PasswordValidators)
+        {
+            var validation = await validator.ValidateAsync(userManager, user, request.NewPassword);
+            if (!validation.Succeeded)
+            {
+                throw ToException(validation);
+            }
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+        // Atomic single use: only one caller can flip used_at from NULL.
+        var claimed = await db.PasswordResetTokens
+            .Where(t => t.Id == stored.Id && t.UsedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.UsedAt, (DateTimeOffset?)now), ct);
+
+        if (claimed == 0)
+        {
+            await transaction.RollbackAsync(ct);
+            throw InvalidResetLink();
+        }
+
+        user.PasswordHash = userManager.PasswordHasher.HashPassword(user, request.NewPassword);
+        var updated = await userManager.UpdateAsync(user);
+        if (!updated.Succeeded)
+        {
+            throw ToException(updated); // leaving the scope rolls the transaction back
+        }
+
+        await userManager.UpdateSecurityStampAsync(user);
+        await userManager.SetLockoutEndDateAsync(user, null);
+        await userManager.ResetAccessFailedCountAsync(user);
+
+        // A password change signs the user out everywhere.
+        await db.RefreshTokens
+            .Where(t => t.UserId == user.Id && t.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, (DateTimeOffset?)now), ct);
+
+        await transaction.CommitAsync(ct);
+    }
+
+    private static string BuildResetBody(string link, int minutes) =>
+        $"We received a request to reset your EthioServe password.{Environment.NewLine}{Environment.NewLine}" +
+        $"Open this link to choose a new password (valid for {minutes} minutes):{Environment.NewLine}{link}" +
+        $"{Environment.NewLine}{Environment.NewLine}" +
+        "If you did not ask for this, ignore this email: your password will not change.";
+
+    private static ValidationException InvalidResetLink() =>
+        new(new[] { new ValidationFailure("Token", "This password reset link is invalid or has expired.") });
 
     private async Task<ApplicationUser> CreateUserAsync(string email, string password, string phoneNumber, string role)
     {

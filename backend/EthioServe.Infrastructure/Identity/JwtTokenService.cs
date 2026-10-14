@@ -69,6 +69,7 @@ public sealed class JwtTokenService : ITokenService
     }
 
     // SHA-256 is enough here because the token is 512 bits of randomness, not a human-chosen password.
+    public string CreateOpaqueToken() => Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
     public string HashRefreshToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

@@ -101,7 +101,27 @@ public sealed class AuthController(IAuthService auth, ICurrentUser currentUser) 
 
         return NoContent();
     }
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)
+    {
+        await auth.RequestPasswordResetAsync(request, GetClient(), ct);
 
+        // Always the same answer, whether or not the email is registered.
+        return Accepted(new { message = "If an account with that email exists, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
+    {
+        await auth.ResetPasswordAsync(request, ct);
+        RefreshTokenCookie.Clear(Response);
+
+        return NoContent();
+    }
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]

@@ -31,6 +31,12 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddSingleton<ITokenService, JwtTokenService>();
+                services.AddOptions<AppOptions>()
+            .Bind(configuration.GetSection(AppOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddSingleton<IEmailService, DevelopmentEmailService>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
@@ -50,6 +56,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IAuthService, AuthService>();
+        
 
         return services;
     }

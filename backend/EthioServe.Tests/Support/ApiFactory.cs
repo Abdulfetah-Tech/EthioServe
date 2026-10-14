@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
-
+using EthioServe.Application.Abstractions;
 namespace EthioServe.Tests.Support;
 
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
@@ -43,7 +43,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services =>
         {
             services.AddControllers().AddApplicationPart(typeof(ErrorsTestController).Assembly);
-
+            services.AddSingleton<TestEmailService>();
+            services.AddSingleton<IEmailService>(sp => sp.GetRequiredService<TestEmailService>());
             // High limits for the normal run; the rate-limit test lowers them on its own server.
             services.Configure<RateLimitSettings>(settings =>
             {

@@ -19,5 +19,11 @@ public interface ITokenService
 
     NewRefreshToken CreateRefreshToken();
 
+    /// <summary>A random, URL-safe, single-purpose token (for example a password reset link).</summary>
+    string CreateOpaqueToken();
+
+    /// <summary>SHA-256 of any opaque token. Used for refresh tokens and reset tokens.</summary>
+    
     string HashRefreshToken(string token);
+
 }

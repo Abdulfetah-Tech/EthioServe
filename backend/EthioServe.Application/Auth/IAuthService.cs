@@ -14,4 +14,9 @@ public interface IAuthService
     Task LogoutAsync(string? refreshToken, CancellationToken ct = default);
 
     Task<CurrentUserDto> GetCurrentUserAsync(Guid userId, CancellationToken ct = default);
+
+    /// <summary>Sends a reset link if the account exists. Behaves identically (and returns normally) if it does not.</summary>
+    Task RequestPasswordResetAsync(ForgotPasswordRequest request, ClientInfo client, CancellationToken ct = default);
+
+    Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 }

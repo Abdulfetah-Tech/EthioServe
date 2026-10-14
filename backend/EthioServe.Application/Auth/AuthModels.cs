@@ -8,6 +8,10 @@ public sealed record RegisterProviderRequest(
 
 public sealed record LoginRequest(string Email, string Password);
 
+public sealed record ForgotPasswordRequest(string Email);
+
+public sealed record ResetPasswordRequest(string Token, string NewPassword);
+
 public sealed record CurrentUserDto(
     Guid Id,
     string Email,

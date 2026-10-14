@@ -19,16 +19,19 @@ public sealed class AuthHarness : IAsyncDisposable
 
     private readonly ServiceProvider _provider;
 
-    private AuthHarness(ServiceProvider provider, TestClock clock, JwtOptions jwt)
+    private AuthHarness(ServiceProvider provider, TestClock clock, JwtOptions jwt, TestEmailService emails)
     {
         _provider = provider;
         Clock = clock;
         Jwt = jwt;
+        Emails = emails;
     }
 
     public TestClock Clock { get; }
 
     public JwtOptions Jwt { get; }
+
+    public TestEmailService Emails { get; }
 
     public static async Task<AuthHarness> CreateAsync(DatabaseFixture fixture)
     {
@@ -39,17 +42,20 @@ public sealed class AuthHarness : IAsyncDisposable
             ["Jwt:Audience"] = "EthioServe.Web",
             ["Jwt:SigningKey"] = "harness-signing-key-0123456789-abcdefghijklmnop",
             ["Jwt:AccessTokenMinutes"] = "15",
-            ["Jwt:RefreshTokenDays"] = "7"
+            ["Jwt:RefreshTokenDays"] = "7",
+            ["App:FrontendBaseUrl"] = "http://localhost:4200"
         };
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
 
         var clock = new TestClock(DateTimeOffset.UtcNow);
+        var emails = new TestEmailService();
 
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddApplication();
         services.AddInfrastructure(configuration);
-        services.AddSingleton<IClock>(clock); // last registration wins: tests now control time
+        services.AddSingleton<IClock>(clock);         // last registration wins: tests now control time
+        services.AddSingleton<IEmailService>(emails); // ...and capture outgoing email
 
         var provider = services.BuildServiceProvider(validateScopes: true);
 
@@ -59,7 +65,7 @@ public sealed class AuthHarness : IAsyncDisposable
             await DatabaseSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>());
         }
 
-        return new AuthHarness(provider, clock, provider.GetRequiredService<IOptions<JwtOptions>>().Value);
+        return new AuthHarness(provider, clock, provider.GetRequiredService<IOptions<JwtOptions>>().Value, emails);
     }
 
     public async Task<T> Call<T>(Func<IAuthService, Task<T>> action)
