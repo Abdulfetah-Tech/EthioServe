@@ -1,9 +1,10 @@
 using EthioServe.Application.Common.Exceptions;
 using EthioServe.Domain.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EthioServe.Tests.Support;
-
+[AllowAnonymous]
 [ApiController]
 [Route("test-support/errors")]
 public sealed class ErrorsTestController : ControllerBase
