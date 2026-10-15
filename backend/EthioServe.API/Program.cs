@@ -106,12 +106,6 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    // Development convenience: apply migrations and seed reference data. Production uses an explicit migration step.
-    await app.Services.InitializeDatabaseAsync();
-}
-if (app.Environment.IsDevelopment())
 
 // Order matters: request logging must wrap the exception handler so it logs the FINAL status code.
 app.UseSerilogRequestLogging();

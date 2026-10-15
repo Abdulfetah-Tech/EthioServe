@@ -2,10 +2,10 @@ import { Component, inject } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-customer-dashboard',
+  selector: 'app-provider-dashboard',
   template: `
     <h1>Welcome, {{ auth.currentUser()?.displayName }}</h1>
-    <p class="muted">Your service requests, quotes and appointments will appear here as we build them.</p>
+    <p class="muted">Incoming requests, quotes, jobs and earnings will appear here as we build them.</p>
 
     <section class="card">
       <h2>Your account</h2>
@@ -13,6 +13,6 @@ import { AuthService } from '../../core/auth/auth.service';
     </section>
   `,
 })
-export class CustomerDashboard {
+export class ProviderDashboard {
   protected readonly auth = inject(AuthService);
 }
