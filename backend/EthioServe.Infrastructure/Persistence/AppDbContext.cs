@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace EthioServe.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock clock)
-    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
 {
     public DbSet<Region> Regions => Set<Region>();
 

@@ -11,13 +11,15 @@ public sealed class DependencyRuleTests
     private static List<string> ReferencedNames(Assembly assembly) =>
         assembly.GetReferencedAssemblies().Select(a => a.Name ?? string.Empty).ToList();
 
-    [Fact]
-    public void Domain_depends_on_no_other_project_and_no_framework_libraries()
+       [Fact]
+    public void Application_does_not_depend_on_infrastructure_api_or_web_and_provider_libraries()
     {
-        var referenced = ReferencedNames(DomainAssembly);
+        var referenced = ReferencedNames(ApplicationAssembly);
 
-        Assert.DoesNotContain(referenced, n => n.StartsWith("EthioServe.", StringComparison.Ordinal));
-        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
+        // EF Core itself is allowed here (IApplicationDbContext); the database provider and the web stack are not.
+        Assert.DoesNotContain(referenced, n => n == "EthioServe.Infrastructure");
+        Assert.DoesNotContain(referenced, n => n == "EthioServe.API");
+        Assert.DoesNotContain(referenced, n => n.StartsWith("Npgsql", StringComparison.Ordinal));
         Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
     }
 

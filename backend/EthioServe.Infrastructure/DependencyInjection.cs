@@ -23,7 +23,7 @@ public static class DependencyInjection
             .UseSnakeCaseNamingConvention());
 
         services.AddSingleton<IClock, SystemClock>();
-
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         // Fails fast at startup if the JWT settings are missing or invalid (for example, no signing key).
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
