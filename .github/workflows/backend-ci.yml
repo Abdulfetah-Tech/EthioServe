@@ -1,0 +1,34 @@
+name: backend-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'global.json'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'global.json'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore backend/EthioServe.sln
+
+      - name: Build
+        run: dotnet build backend/EthioServe.sln --no-restore --configuration Release
+
+      # The integration tests start PostgreSQL containers; GitHub's Ubuntu runners include Docker.
+      - name: Test
+        run: dotnet test backend/EthioServe.sln --no-build --configuration Release --nologo
