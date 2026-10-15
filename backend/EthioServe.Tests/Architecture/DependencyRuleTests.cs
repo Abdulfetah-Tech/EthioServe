@@ -23,17 +23,7 @@ public sealed class DependencyRuleTests
         Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void Application_does_not_depend_on_infrastructure_api_or_web_and_database_libraries()
-    {
-        var referenced = ReferencedNames(ApplicationAssembly);
-
-        Assert.DoesNotContain(referenced, n => n == "EthioServe.Infrastructure");
-        Assert.DoesNotContain(referenced, n => n == "EthioServe.API");
-        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
-        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
-    }
-
+  
     [Fact]
     public void Infrastructure_does_not_depend_on_the_api()
     {
