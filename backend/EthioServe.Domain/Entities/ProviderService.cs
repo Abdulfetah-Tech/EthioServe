@@ -25,4 +25,11 @@ public sealed class ProviderService : BaseEntity
     public string? Description { get; private set; }
 
     public bool IsActive { get; private set; }
+
+    public void Update(decimal price, string? description, bool isActive)
+    {
+        Price = Guard.NotNegative(price, nameof(price));
+        Description = description;
+        IsActive = isActive;
+    }
 }

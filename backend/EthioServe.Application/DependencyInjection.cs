@@ -4,6 +4,7 @@ using EthioServe.Application.Common;
 using EthioServe.Application.Locations;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using EthioServe.Application.Providers;
 
 namespace EthioServe.Application;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<ILocationQueries, LocationQueries>();
         services.AddScoped<ICatalogQueries, CatalogQueries>();
         services.AddScoped<IAdminCatalogService, AdminCatalogService>();
+        services.AddScoped<IProviderSelfService, ProviderSelfService>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         return services;
     }

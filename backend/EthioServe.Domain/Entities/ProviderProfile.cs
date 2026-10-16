@@ -5,16 +5,17 @@ namespace EthioServe.Domain.Entities;
 
 public sealed class ProviderProfile : AuditableEntity
 {
+    public const int MaxYearsOfExperience = 60;
+
+    private const int MaxNoteLength = 500;
+
     private ProviderProfile() { }
 
     public ProviderProfile(
         Guid userId, string businessName, string phoneNumber, int regionId, int cityId,
         int? subCityId = null, string description = "", string address = "", int yearsOfExperience = 0)
     {
-        if (yearsOfExperience < 0)
-        {
-            throw new DomainException("yearsOfExperience cannot be negative.");
-        }
+        ValidateExperience(yearsOfExperience);
 
         UserId = userId;
         BusinessName = Guard.NotBlank(businessName, nameof(businessName));
@@ -43,6 +44,11 @@ public sealed class ProviderProfile : AuditableEntity
 
     public VerificationStatus VerificationStatus { get; private set; }
 
+    /// <summary>Why the provider was rejected or suspended. Shown to the provider; cleared on approval.</summary>
+    public string? VerificationNote { get; private set; }
+
+    public DateTimeOffset? VerificationReviewedAt { get; private set; }
+
     /// <summary>Denormalized aggregate, recalculated in the same transaction as every review change (Phase 9).</summary>
     public decimal AverageRating { get; private set; }
 
@@ -61,4 +67,113 @@ public sealed class ProviderProfile : AuditableEntity
     public decimal? Longitude { get; private set; }
 
     public bool IsAvailable { get; private set; }
+
+    public void UpdateDetails(
+        string businessName, string description, string phoneNumber, int yearsOfExperience,
+        int regionId, int cityId, int? subCityId, string address, decimal? latitude, decimal? longitude)
+    {
+        ValidateExperience(yearsOfExperience);
+
+        if ((latitude is null) != (longitude is null))
+        {
+            throw new DomainException("Latitude and longitude must be given together.");
+        }
+
+        if (latitude is < -90m or > 90m)
+        {
+            throw new DomainException("Latitude must be between -90 and 90.");
+        }
+
+        if (longitude is < -180m or > 180m)
+        {
+            throw new DomainException("Longitude must be between -180 and 180.");
+        }
+
+        BusinessName = Guard.NotBlank(businessName, nameof(businessName));
+        PhoneNumber = Guard.NotBlank(phoneNumber, nameof(phoneNumber));
+        Description = description.Trim();
+        Address = address.Trim();
+        YearsOfExperience = yearsOfExperience;
+        RegionId = regionId;
+        CityId = cityId;
+        SubCityId = subCityId;
+        Latitude = latitude;
+        Longitude = longitude;
+    }
+
+    public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
+
+    /// <summary>The provider asks to be reviewed. Allowed for new providers and after a rejection.</summary>
+    public void RequestVerification()
+    {
+        if (VerificationStatus is not (VerificationStatus.Unverified or VerificationStatus.Rejected))
+        {
+            throw new DomainException(
+                $"A provider whose verification status is {VerificationStatus} cannot request verification.");
+        }
+
+        VerificationStatus = VerificationStatus.Pending;
+        VerificationNote = null;
+    }
+
+    public void Approve(DateTimeOffset now)
+    {
+        RequireStatus(VerificationStatus.Pending, "approved");
+
+        VerificationStatus = VerificationStatus.Verified;
+        VerificationNote = null;
+        VerificationReviewedAt = now;
+    }
+
+    public void Reject(string reason, DateTimeOffset now)
+    {
+        RequireStatus(VerificationStatus.Pending, "rejected");
+
+        VerificationNote = Note(reason);
+        VerificationStatus = VerificationStatus.Rejected;
+        VerificationReviewedAt = now;
+    }
+
+    public void Suspend(string reason, DateTimeOffset now)
+    {
+        RequireStatus(VerificationStatus.Verified, "suspended");
+
+        VerificationNote = Note(reason);
+        VerificationStatus = VerificationStatus.Suspended;
+        VerificationReviewedAt = now;
+    }
+
+    public void Reinstate(DateTimeOffset now)
+    {
+        RequireStatus(VerificationStatus.Suspended, "reinstated");
+
+        VerificationStatus = VerificationStatus.Verified;
+        VerificationNote = null;
+        VerificationReviewedAt = now;
+    }
+
+    private void RequireStatus(VerificationStatus expected, string action)
+    {
+        if (VerificationStatus != expected)
+        {
+            throw new DomainException($"A provider whose verification status is {VerificationStatus} cannot be {action}.");
+        }
+    }
+
+    private static void ValidateExperience(int years)
+    {
+        if (years < 0 || years > MaxYearsOfExperience)
+        {
+            throw new DomainException($"yearsOfExperience must be between 0 and {MaxYearsOfExperience}.");
+        }
+    }
+
+    private static string Note(string reason)
+    {
+        var note = Guard.NotBlank(reason, nameof(reason));
+
+        return note.Length > MaxNoteLength
+            ? throw new DomainException($"The note cannot be longer than {MaxNoteLength} characters.")
+            : note;
+    }
 }

@@ -25,6 +25,7 @@ public sealed class ProviderProfileConfiguration : IEntityTypeConfiguration<Prov
         builder.Property(p => p.PhoneNumber).HasMaxLength(20).IsRequired();
         builder.Property(p => p.ProfileImageKey).HasMaxLength(300);
         builder.Property(p => p.VerificationStatus).AsStringColumn(20);
+        builder.Property(p => p.VerificationNote).HasMaxLength(500);
         builder.Property(p => p.AverageRating).HasPrecision(3, 2);
         builder.Property(p => p.Address).HasMaxLength(300).IsRequired();
         builder.Property(p => p.Latitude).HasPrecision(9, 6);
