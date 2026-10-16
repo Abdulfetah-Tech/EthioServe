@@ -679,6 +679,15 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<string>("VerificationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("verification_note");
+
+                    b.Property<DateTimeOffset?>("VerificationReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verification_reviewed_at");
+
                     b.Property<string>("VerificationStatus")
                         .IsRequired()
                         .HasMaxLength(20)
