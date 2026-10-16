@@ -3,6 +3,8 @@ using EthioServe.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace EthioServe.API.Middleware;
 
@@ -30,6 +32,9 @@ public sealed class GlobalExceptionHandler(
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Access denied"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            // Safety net: the database's unique indexes decided a race that the application checks could not.
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } }
+                => (StatusCodes.Status409Conflict, "Conflict"),
             DomainException => (StatusCodes.Status422UnprocessableEntity, "Business rule violation"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
@@ -57,10 +62,7 @@ public sealed class GlobalExceptionHandler(
             {
                 Status = status,
                 Title = title,
-                // Our own exceptions carry safe messages; anything else gets a generic one.
-                Detail = status == StatusCodes.Status500InternalServerError
-                    ? "Something went wrong on our side. Please try again later."
-                    : exception.Message
+                Detail = SafeDetail(exception, status)
             };
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
@@ -70,6 +72,15 @@ public sealed class GlobalExceptionHandler(
             ProblemDetails = problem
         });
     }
+
+    // Our own exceptions carry safe messages; database and unexpected errors never reach the client.
+    private static string SafeDetail(Exception exception, int status) => exception switch
+    {
+        _ when status == StatusCodes.Status500InternalServerError =>
+            "Something went wrong on our side. Please try again later.",
+        DbUpdateException => "This item conflicts with an existing one.",
+        _ => exception.Message
+    };
 
     private static Dictionary<string, string[]> ToErrors(ValidationException exception) =>
         exception.Errors

@@ -16,6 +16,10 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
 
     public Guid? ProviderId => ReadGuid(AppClaims.ProviderId);
 
+    public string IpAddress => accessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+    public string UserAgent => accessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? string.Empty;
+
     public bool IsInRole(string role) => Principal?.IsInRole(role) == true;
 
     private Guid? ReadGuid(string claimType) =>

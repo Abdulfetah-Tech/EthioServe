@@ -21,4 +21,15 @@ public sealed class ServiceCategory : AuditableEntity
     public string? IconKey { get; private set; }
 
     public bool IsActive { get; private set; }
+
+    public void Update(string name, string? description, string? iconKey)
+    {
+        Name = Guard.NotBlank(name, nameof(name));
+        Description = description;
+        IconKey = iconKey;
+    }
+
+    public void Activate() => IsActive = true;
+
+    public void Deactivate() => IsActive = false;
 }

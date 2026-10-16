@@ -11,5 +11,9 @@ public interface ICurrentUser
 
     Guid? ProviderId { get; }
 
+    string IpAddress { get; }
+
+    string UserAgent { get; }
+
     bool IsInRole(string role);
 }
