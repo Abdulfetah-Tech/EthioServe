@@ -18,6 +18,8 @@ public static class DependencyInjection
         services.AddScoped<ICatalogQueries, CatalogQueries>();
         services.AddScoped<IAdminCatalogService, AdminCatalogService>();
         services.AddScoped<IProviderSelfService, ProviderSelfService>();
+        services.AddScoped<IAdminProviderService, AdminProviderService>();
+        services.AddScoped<IProviderSearchQueries, ProviderSearchQueries>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         return services;
     }
