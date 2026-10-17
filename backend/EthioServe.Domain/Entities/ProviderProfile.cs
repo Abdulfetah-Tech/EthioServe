@@ -68,26 +68,12 @@ public sealed class ProviderProfile : AuditableEntity
 
     public bool IsAvailable { get; private set; }
 
-    public void UpdateDetails(
+        public void UpdateDetails(
         string businessName, string description, string phoneNumber, int yearsOfExperience,
         int regionId, int cityId, int? subCityId, string address, decimal? latitude, decimal? longitude)
     {
         ValidateExperience(yearsOfExperience);
-
-        if ((latitude is null) != (longitude is null))
-        {
-            throw new DomainException("Latitude and longitude must be given together.");
-        }
-
-        if (latitude is < -90m or > 90m)
-        {
-            throw new DomainException("Latitude must be between -90 and 90.");
-        }
-
-        if (longitude is < -180m or > 180m)
-        {
-            throw new DomainException("Longitude must be between -180 and 180.");
-        }
+        ValidateCoordinates(latitude, longitude);
 
         BusinessName = Guard.NotBlank(businessName, nameof(businessName));
         PhoneNumber = Guard.NotBlank(phoneNumber, nameof(phoneNumber));
@@ -100,7 +86,23 @@ public sealed class ProviderProfile : AuditableEntity
         Latitude = latitude;
         Longitude = longitude;
     }
+    private static void ValidateCoordinates(decimal? latitude, decimal? longitude)
+    {
+        if (latitude.HasValue != longitude.HasValue)
+        {
+            throw new DomainException("Latitude and longitude must be given together.");
+        }
 
+        if (latitude.HasValue && (latitude.Value < -90m || latitude.Value > 90m))
+        {
+            throw new DomainException("Latitude must be between -90 and 90.");
+        }
+
+        if (longitude.HasValue && (longitude.Value < -180m || longitude.Value > 180m))
+        {
+            throw new DomainException("Longitude must be between -180 and 180.");
+        }
+    }
     public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
 
     /// <summary>The provider asks to be reviewed. Allowed for new providers and after a rejection.</summary>
