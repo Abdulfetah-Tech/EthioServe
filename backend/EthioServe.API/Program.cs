@@ -135,6 +135,7 @@ if (app.Environment.IsDevelopment())
     // Development convenience: apply migrations and seed reference data. Production uses an explicit migration step.
     await app.Services.InitializeDatabaseAsync();
     await AdminBootstrapper.EnsureAdminAsync(app.Services, app.Configuration);
+    await DemoDataSeeder.SeedAsync(app.Services, app.Configuration);
 }
 app.UseHttpsRedirection();
 app.UseRateLimiter();

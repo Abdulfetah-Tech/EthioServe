@@ -32,7 +32,7 @@ public sealed class AuthHarness : IAsyncDisposable
     public JwtOptions Jwt { get; }
 
     public TestEmailService Emails { get; }
-
+    public IServiceProvider Services => _provider;
     public static async Task<AuthHarness> CreateAsync(DatabaseFixture fixture)
     {
         var settings = new Dictionary<string, string?>

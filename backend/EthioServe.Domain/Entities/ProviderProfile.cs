@@ -104,7 +104,30 @@ public sealed class ProviderProfile : AuditableEntity
         }
     }
     public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
+    /// <summary>
+    /// Replaces the denormalized rating summary. The review workflow (Phase 9) recalculates it after every review
+    /// change; development demo data sets it directly.
+    /// </summary>
+    public void ApplyRatingSummary(decimal averageRating, int totalReviews)
+    {
+        if (averageRating < 0m || averageRating > 5m)
+        {
+            throw new DomainException("averageRating must be between 0 and 5.");
+        }
 
+        if (totalReviews < 0)
+        {
+            throw new DomainException("totalReviews cannot be negative.");
+        }
+
+        if (totalReviews == 0 && averageRating != 0m)
+        {
+            throw new DomainException("A provider without reviews cannot have a rating.");
+        }
+
+        AverageRating = Math.Round(averageRating, 2);
+        TotalReviews = totalReviews;
+    }
     /// <summary>The provider asks to be reviewed. Allowed for new providers and after a rejection.</summary>
     public void RequestVerification()
     {
