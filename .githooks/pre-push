@@ -1,0 +1,3 @@
+#!/bin/sh
+echo 'Running checks before push (git push --no-verify skips them)...'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File Scripts/verify.ps1 || exit 1

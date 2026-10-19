@@ -150,11 +150,11 @@ public sealed class ProviderProfileDomainTests
         Assert.Equal(9.03m, provider.Latitude);
     }
 
-    [Theory]
+        [Theory]
     [InlineData(-1, 9.03, 38.74)]
     [InlineData(61, 9.03, 38.74)]
-    [InlineData(5, 91, 38.74)]
-    [InlineData(5, 9.03, 181)]
+    [InlineData(5, 91.0, 38.74)]
+    [InlineData(5, 9.03, 181.0)]
     [InlineData(5, 9.03, null)]
     [InlineData(5, null, 38.74)]
     public void Invalid_details_are_rejected_and_change_nothing(int years, double? latitude, double? longitude)
