@@ -60,6 +60,24 @@ export const routes: Routes = [
     title: 'Provider | EthioServe',
     loadComponent: () => import('./features/marketplace/provider-detail').then((m) => m.ProviderDetail),
   },
+    {
+    path: 'register/provider',
+    title: 'Register as a provider | EthioServe',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/register-provider').then((m) => m.RegisterProvider),
+  },
+  {
+    path: 'provider/profile',
+    title: 'Your profile | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-profile').then((m) => m.ProviderProfileEditor),
+  },
+  {
+    path: 'provider/services',
+    title: 'Your services | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-services').then((m) => m.ProviderServices),
+  },
   {
     path: 'forbidden',
     title: 'Access denied | EthioServe',

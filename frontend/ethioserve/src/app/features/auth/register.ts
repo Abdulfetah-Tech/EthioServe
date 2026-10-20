@@ -13,9 +13,9 @@ import { PASSWORD_HINT, PHONE_PATTERN, matchingFields, strongPassword } from '..
   template: `
     <section class="card narrow">
       <h1>Create your account</h1>
-      <p class="muted">
-        Request services and compare quotes from verified professionals. Want to offer services instead? Provider
-        sign-up is coming soon.
+            <p class="muted">
+        Request services and compare quotes from verified professionals. Want to offer services instead?
+        <a routerLink="/register/provider">Register as a provider</a>.
       </p>
 
       @if (errorMessage(); as message) {

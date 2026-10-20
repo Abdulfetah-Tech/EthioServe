@@ -1,0 +1,90 @@
+﻿param([ValidateSet('4.4a', '4.4b', '4.5a')][string]$UpTo = '4.4b')
+
+$root = Split-Path -Parent $PSScriptRoot
+$app = Join-Path $root 'frontend\ethioserve\src\app'
+
+$batches = [ordered]@{
+    '4.4a' = @(
+        'core\models\marketplace.models.ts', 'core\api\load-state.ts', 'core\api\load-state.spec.ts',
+        'core\api\marketplace.api.ts', 'core\api\marketplace.api.spec.ts',
+        'features\marketplace\home.ts', 'features\marketplace\provider-card.ts', 'features\marketplace\providers.ts',
+        'features\marketplace\provider-detail.ts', 'features\marketplace\search-params.ts',
+        'features\marketplace\search-params.spec.ts',
+        'shared\etb.pipe.ts', 'shared\etb.pipe.spec.ts', 'shared\pager.ts', 'shared\pager.spec.ts',
+        'shared\rating.ts', 'shared\rating.spec.ts'
+    )
+    '4.4b' = @(
+        'core\models\provider.models.ts', 'core\api\provider.api.ts', 'core\api\provider.api.spec.ts',
+        'features\auth\register-provider.ts', 'features\provider\provider-nav.ts',
+        'features\provider\provider-dashboard.ts', 'features\provider\provider-profile.ts',
+        'features\provider\provider-services.ts', 'features\provider\verification.ts',
+        'features\provider\verification.spec.ts'
+    )
+    '4.5a' = @(
+        'core\models\admin.models.ts', 'core\api\admin.api.ts', 'core\api\admin.api.spec.ts',
+        'features\admin\admin-nav.ts', 'features\admin\admin-dashboard.ts', 'features\admin\admin-providers.ts',
+        'features\admin\admin-provider-detail.ts', 'features\admin\admin-provider-params.ts',
+        'features\admin\admin-provider-params.spec.ts', 'features\admin\provider-actions.ts',
+        'features\admin\provider-actions.spec.ts'
+    )
+}
+
+$expected = @()
+foreach ($name in $batches.Keys) {
+    $expected += $batches[$name]
+    if ($name -eq $UpTo) { break }
+}
+
+# Files from earlier batches that may live in the same folders.
+$older = @(
+    'core\models\auth.models.ts', 'core\api\api-error.ts', 'core\api\api-error.spec.ts',
+    'core\api\apply-server-errors.ts', 'features\auth\login.ts', 'features\auth\register.ts',
+    'features\auth\forgot-password.ts', 'features\auth\reset-password.ts', 'features\admin\admin-dashboard.ts'
+)
+$known = $expected + $older
+$folders = 'core\models\', 'core\api\', 'features\marketplace\', 'features\provider\', 'features\auth\', 'features\admin\', 'shared\'
+
+$actual = Get-ChildItem $app -Recurse -File -Filter *.ts | ForEach-Object { $_.FullName.Substring($app.Length + 1) }
+$missing = @($expected | Where-Object { $actual -cnotcontains $_ })
+$unexpected = @($actual | Where-Object {
+    $path = $_
+    (@($folders | Where-Object { $path.StartsWith($_) })).Count -gt 0 -and $known -cnotcontains $path
+})
+
+$scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1'
+$scriptsActual = Get-ChildItem (Join-Path $root 'Scripts') -File -Name
+$scriptsMissing = @($scriptNames | Where-Object { $scriptsActual -cnotcontains $_ })
+$scriptsUnexpected = @($scriptsActual | Where-Object { $scriptNames -cnotcontains $_ })
+
+$problems = 0
+
+foreach ($file in $missing) {
+    $problems++
+    Write-Host "MISSING (not created yet, or misspelled): $file" -ForegroundColor Red
+    $folder = Split-Path $file
+    foreach ($hint in ($unexpected | Where-Object { (Split-Path $_) -eq $folder })) {
+        Write-Host "   you may have created: $hint" -ForegroundColor Yellow
+    }
+}
+
+foreach ($file in $unexpected) {
+    $problems++
+    Write-Host "NOT IN THE PLAN (typo, or leftover): $file" -ForegroundColor Yellow
+}
+
+foreach ($file in $scriptsMissing) {
+    $problems++
+    Write-Host "MISSING script: Scripts\$file" -ForegroundColor Red
+}
+
+foreach ($file in $scriptsUnexpected) {
+    $problems++
+    Write-Host "UNEXPECTED script (typo?): Scripts\$file" -ForegroundColor Yellow
+}
+
+if ($problems -eq 0) {
+    Write-Host "All $($expected.Count) frontend files (up to batch $UpTo) and $($scriptNames.Count) scripts are present and correctly named." -ForegroundColor Green
+}
+else {
+    exit 1
+}

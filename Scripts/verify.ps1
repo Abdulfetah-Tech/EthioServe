@@ -1,3 +1,4 @@
+﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = Split-Path -Parent $PSScriptRoot
 $esc = [char]27
 
@@ -10,7 +11,6 @@ if ($running) {
 function Show-Problems([string[]]$lines) {
     $shown = 0
     for ($i = 0; $i -lt $lines.Count -and $shown -lt 8; $i++) {
-        # Matches xUnit/vitest failures, MSBuild errors and Angular's "X [ERROR] ..." blocks.
         if ($lines[$i] -cmatch '^\s+Failed ' -or $lines[$i] -match ': error ' -or $lines[$i] -match '\[ERROR\]') {
             $end = [Math]::Min($i + 6, $lines.Count - 1)
             $lines[$i..$end]
@@ -25,7 +25,9 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
     Write-Host "`n=== $name ===" -ForegroundColor Cyan
     Push-Location (Join-Path $root $folder)
     try {
-        $output = & $command 2>&1 | ForEach-Object { $_.ToString() -replace "$esc\[[0-9;]*[A-Za-z]", '' }
+        $output = & $command 2>&1 |
+            ForEach-Object { $_.ToString() -replace "$esc\[[0-9;]*[A-Za-z]", '' } |
+            Where-Object { $_ -ne 'System.Management.Automation.RemoteException' }
         $code = $LASTEXITCODE
     }
     finally {

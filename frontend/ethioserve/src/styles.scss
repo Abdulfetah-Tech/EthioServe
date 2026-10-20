@@ -213,3 +213,35 @@ select:disabled {
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--color-border);
 }
+textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  resize: vertical;
+}
+textarea:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+textarea[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(--color-danger); }
+
+.tabs { display: flex; gap: 1rem; border-bottom: 1px solid var(--color-border); }
+.tabs a {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 3px solid transparent;
+  color: var(--color-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+.tabs a.active { border-bottom-color: var(--color-primary); color: var(--color-text); }
+
+.checklist { display: grid; gap: 0.4rem; margin: 0.5rem 0 1rem; padding: 0; list-style: none; }
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: middle; }
+.row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; }
+.btn-danger { background: transparent; border-color: var(--color-danger); color: var(--color-danger); }

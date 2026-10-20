@@ -1,0 +1,17 @@
+﻿import { Component } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
+@Component({
+  selector: 'app-provider-nav',
+  imports: [RouterLink, RouterLinkActive],
+  template: `
+    <nav class="tabs" aria-label="Provider area">
+      <a routerLink="/provider" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">
+        Overview
+      </a>
+      <a routerLink="/provider/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Profile</a>
+      <a routerLink="/provider/services" routerLinkActive="active" ariaCurrentWhenActive="page">Services</a>
+    </nav>
+  `,
+})
+export class ProviderNav {}
