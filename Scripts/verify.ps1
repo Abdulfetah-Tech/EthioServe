@@ -10,11 +10,13 @@ if ($running) {
 function Show-Problems([string[]]$lines) {
     $shown = 0
     for ($i = 0; $i -lt $lines.Count -and $shown -lt 8; $i++) {
-        if ($lines[$i] -match '^\s+Failed ' -or $lines[$i] -match ': error ') {
-            $end = [Math]::Min($i + 7, $lines.Count - 1)
+        # Matches xUnit/vitest failures, MSBuild errors and Angular's "X [ERROR] ..." blocks.
+        if ($lines[$i] -cmatch '^\s+Failed ' -or $lines[$i] -match ': error ' -or $lines[$i] -match '\[ERROR\]') {
+            $end = [Math]::Min($i + 6, $lines.Count - 1)
             $lines[$i..$end]
             ''
             $shown++
+            $i = $end
         }
     }
 }
@@ -23,7 +25,6 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
     Write-Host "`n=== $name ===" -ForegroundColor Cyan
     Push-Location (Join-Path $root $folder)
     try {
-        # Colour codes are stripped, so the summary lines can be matched reliably.
         $output = & $command 2>&1 | ForEach-Object { $_.ToString() -replace "$esc\[[0-9;]*[A-Za-z]", '' }
         $code = $LASTEXITCODE
     }
@@ -35,11 +36,11 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
     $output | Set-Content $log
 
     if ($code -eq 0) {
-        $output | Select-String 'Passed!|Build succeeded|Application bundle generation complete|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
+        $output | Select-String -CaseSensitive 'Passed!|Build succeeded|Application bundle generation complete|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
     }
     else {
         Show-Problems $output
-        $output | Select-String 'Passed!|Failed!|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
+        $output | Select-String -CaseSensitive 'Passed!|Failed!|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
         Write-Host "`n$name FAILED. Do not commit. Full log: $log" -ForegroundColor Red
         exit 1
     }
