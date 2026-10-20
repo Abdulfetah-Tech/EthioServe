@@ -5,6 +5,7 @@
     <a routerLink="/" class="brand" aria-label="EthioServe home">EthioServe</a>
 
     <nav aria-label="Main">
+      <a routerLink="/providers" routerLinkActive="active">Find providers</a>
       @if (auth.isAuthenticated()) {
         <a [routerLink]="home()" routerLinkActive="active">Dashboard</a>
         <span class="user-name">{{ auth.currentUser()?.displayName }}</span>

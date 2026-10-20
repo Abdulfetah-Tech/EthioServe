@@ -86,7 +86,8 @@ public sealed class ProviderProfile : AuditableEntity
         Latitude = latitude;
         Longitude = longitude;
     }
-    private static void ValidateCoordinates(decimal? latitude, decimal? longitude)
+
+        private static void ValidateCoordinates(decimal? latitude, decimal? longitude)
     {
         if (latitude.HasValue != longitude.HasValue)
         {

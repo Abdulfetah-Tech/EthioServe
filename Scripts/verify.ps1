@@ -1,4 +1,11 @@
 $root = Split-Path -Parent $PSScriptRoot
+$esc = [char]27
+
+$running = Get-Process -Name 'EthioServe.API' -ErrorAction SilentlyContinue
+if ($running) {
+    Write-Host "The API is still running (PID $($running.Id -join ', ')). Stop it first (Ctrl+C in its terminal), then run this again." -ForegroundColor Red
+    exit 1
+}
 
 function Show-Problems([string[]]$lines) {
     $shown = 0
@@ -16,7 +23,8 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
     Write-Host "`n=== $name ===" -ForegroundColor Cyan
     Push-Location (Join-Path $root $folder)
     try {
-        $output = & $command 2>&1 | ForEach-Object { $_.ToString() }
+        # Colour codes are stripped, so the summary lines can be matched reliably.
+        $output = & $command 2>&1 | ForEach-Object { $_.ToString() -replace "$esc\[[0-9;]*[A-Za-z]", '' }
         $code = $LASTEXITCODE
     }
     finally {
@@ -27,11 +35,11 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
     $output | Set-Content $log
 
     if ($code -eq 0) {
-        $output | Select-String 'Test summary|Build succeeded|Application bundle generation complete|Tests  ' | ForEach-Object { $_.Line }
+        $output | Select-String 'Passed!|Build succeeded|Application bundle generation complete|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
     }
     else {
         Show-Problems $output
-        $output | Select-String 'Test summary|Failed!' | ForEach-Object { $_.Line }
+        $output | Select-String 'Passed!|Failed!|Test Files|^\s*Tests\s' | ForEach-Object { $_.Line.Trim() }
         Write-Host "`n$name FAILED. Do not commit. Full log: $log" -ForegroundColor Red
         exit 1
     }

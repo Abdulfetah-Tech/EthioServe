@@ -50,6 +50,16 @@ export const routes: Routes = [
     canActivate: [roleGuard(Roles.Admin)],
     loadComponent: () => import('./features/admin/admin-dashboard').then((m) => m.AdminDashboard),
   },
+    {
+    path: 'providers',
+    title: 'Find providers | EthioServe',
+    loadComponent: () => import('./features/marketplace/providers').then((m) => m.Providers),
+  },
+  {
+    path: 'providers/:id',
+    title: 'Provider | EthioServe',
+    loadComponent: () => import('./features/marketplace/provider-detail').then((m) => m.ProviderDetail),
+  },
   {
     path: 'forbidden',
     title: 'Access denied | EthioServe',
