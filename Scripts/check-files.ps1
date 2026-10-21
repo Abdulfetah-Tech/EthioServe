@@ -1,4 +1,4 @@
-﻿param([ValidateSet('4.4a', '4.4b', '4.5a')][string]$UpTo = '4.4b')
+﻿param([string]$UpTo = '')
 
 $root = Split-Path -Parent $PSScriptRoot
 $app = Join-Path $root 'frontend\ethioserve\src\app'
@@ -27,19 +27,37 @@ $batches = [ordered]@{
         'features\admin\admin-provider-params.spec.ts', 'features\admin\provider-actions.ts',
         'features\admin\provider-actions.spec.ts'
     )
+    '4.5b' = @(
+        'core\models\admin-catalog.models.ts', 'core\api\admin-catalog.api.ts', 'core\api\admin-catalog.api.spec.ts',
+        'features\admin\pricing.ts', 'features\admin\pricing.spec.ts',
+        'features\admin\admin-service-params.ts', 'features\admin\admin-service-params.spec.ts',
+        'features\admin\admin-categories.ts', 'features\admin\admin-services.ts'
+    )
+}
+$names = @($batches.Keys)
+
+# Without -UpTo, the newest batch that has at least one file is the one being worked on.
+if (-not $UpTo) {
+    $UpTo = $names[0]
+    foreach ($name in $names) {
+        if (@($batches[$name] | Where-Object { Test-Path (Join-Path $app $_) }).Count -gt 0) { $UpTo = $name }
+    }
+}
+if ($names -notcontains $UpTo) {
+    Write-Host "Unknown batch '$UpTo'. Use one of: $($names -join ', ')" -ForegroundColor Red
+    exit 2
 }
 
 $expected = @()
-foreach ($name in $batches.Keys) {
+foreach ($name in $names) {
     $expected += $batches[$name]
     if ($name -eq $UpTo) { break }
 }
 
-# Files from earlier batches that may live in the same folders.
 $older = @(
     'core\models\auth.models.ts', 'core\api\api-error.ts', 'core\api\api-error.spec.ts',
     'core\api\apply-server-errors.ts', 'features\auth\login.ts', 'features\auth\register.ts',
-    'features\auth\forgot-password.ts', 'features\auth\reset-password.ts', 'features\admin\admin-dashboard.ts'
+    'features\auth\forgot-password.ts', 'features\auth\reset-password.ts'
 )
 $known = $expected + $older
 $folders = 'core\models\', 'core\api\', 'features\marketplace\', 'features\provider\', 'features\auth\', 'features\admin\', 'shared\'
@@ -66,17 +84,14 @@ foreach ($file in $missing) {
         Write-Host "   you may have created: $hint" -ForegroundColor Yellow
     }
 }
-
 foreach ($file in $unexpected) {
     $problems++
     Write-Host "NOT IN THE PLAN (typo, or leftover): $file" -ForegroundColor Yellow
 }
-
 foreach ($file in $scriptsMissing) {
     $problems++
     Write-Host "MISSING script: Scripts\$file" -ForegroundColor Red
 }
-
 foreach ($file in $scriptsUnexpected) {
     $problems++
     Write-Host "UNEXPECTED script (typo?): Scripts\$file" -ForegroundColor Yellow
@@ -84,7 +99,7 @@ foreach ($file in $scriptsUnexpected) {
 
 if ($problems -eq 0) {
     Write-Host "All $($expected.Count) frontend files (up to batch $UpTo) and $($scriptNames.Count) scripts are present and correctly named." -ForegroundColor Green
+    exit 0
 }
-else {
-    exit 1
-}
+
+exit 1

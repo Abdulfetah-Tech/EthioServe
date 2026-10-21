@@ -8,6 +8,14 @@ if ($running) {
     exit 1
 }
 
+# A wrong file name causes dozens of confusing build errors, so it is checked first (this takes a second).
+$LASTEXITCODE = 0
+& (Join-Path $PSScriptRoot 'check-files.ps1')
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nFix the file names above first, then run this again." -ForegroundColor Red
+    exit 1
+}
+
 function Show-Problems([string[]]$lines) {
     $shown = 0
     for ($i = 0; $i -lt $lines.Count -and $shown -lt 8; $i++) {

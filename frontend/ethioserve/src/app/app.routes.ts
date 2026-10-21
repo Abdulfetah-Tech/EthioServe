@@ -78,6 +78,18 @@ export const routes: Routes = [
     canActivate: [roleGuard(Roles.Provider)],
     loadComponent: () => import('./features/provider/provider-services').then((m) => m.ProviderServices),
   },
+    {
+    path: 'admin/providers',
+    title: 'Provider review | EthioServe',
+    canActivate: [roleGuard(Roles.Admin)],
+    loadComponent: () => import('./features/admin/admin-providers').then((m) => m.AdminProviders),
+  },
+  {
+    path: 'admin/providers/:id',
+    title: 'Provider | EthioServe',
+    canActivate: [roleGuard(Roles.Admin)],
+    loadComponent: () => import('./features/admin/admin-provider-detail').then((m) => m.AdminProviderPage),
+  },
   {
     path: 'forbidden',
     title: 'Access denied | EthioServe',

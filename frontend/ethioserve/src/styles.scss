@@ -245,3 +245,12 @@ textarea[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(-
 .table th, .table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: middle; }
 .row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; }
 .btn-danger { background: transparent; border-color: var(--color-danger); color: var(--color-danger); }
+.badge-warn { background: #fff4d6; border-color: transparent; color: #7a5b00; }
+.badge-danger { background: var(--color-danger-bg); border-color: transparent; color: var(--color-danger); }
+@media (prefers-color-scheme: dark) {
+  .badge-warn { background: #3a2f10; color: #f3d98b; }
+}
+
+.details { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.5rem; margin: 0 0 1rem; }
+.details dt { color: var(--color-muted); font-weight: 600; }
+.details dd { margin: 0; }
