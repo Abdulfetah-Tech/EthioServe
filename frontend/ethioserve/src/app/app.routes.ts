@@ -90,6 +90,18 @@ export const routes: Routes = [
     canActivate: [roleGuard(Roles.Admin)],
     loadComponent: () => import('./features/admin/admin-provider-detail').then((m) => m.AdminProviderPage),
   },
+    {
+    path: 'admin/categories',
+    title: 'Categories | EthioServe',
+    canActivate: [roleGuard(Roles.Admin)],
+    loadComponent: () => import('./features/admin/admin-categories').then((m) => m.AdminCategories),
+  },
+  {
+    path: 'admin/services',
+    title: 'Services | EthioServe',
+    canActivate: [roleGuard(Roles.Admin)],
+    loadComponent: () => import('./features/admin/admin-services').then((m) => m.AdminServices),
+  },
   {
     path: 'forbidden',
     title: 'Access denied | EthioServe',
