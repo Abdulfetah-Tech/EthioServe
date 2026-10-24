@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
@@ -9,6 +9,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a routerLink="/provider" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">
         Overview
       </a>
+      <a routerLink="/provider/requests" routerLinkActive="active" ariaCurrentWhenActive="page">Requests</a>
       <a routerLink="/provider/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Profile</a>
       <a routerLink="/provider/services" routerLinkActive="active" ariaCurrentWhenActive="page">Services</a>
     </nav>

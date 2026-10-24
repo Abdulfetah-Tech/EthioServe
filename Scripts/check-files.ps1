@@ -33,6 +33,15 @@ $batches = [ordered]@{
         'features\admin\admin-service-params.ts', 'features\admin\admin-service-params.spec.ts',
         'features\admin\admin-categories.ts', 'features\admin\admin-services.ts'
     )
+    '5.2' = @(
+        'core\models\request.models.ts', 'core\api\request.api.ts', 'core\api\request.api.spec.ts',
+        'features\customer\customer-nav.ts', 'features\customer\request-status.ts', 'features\customer\request-status.spec.ts',
+        'features\customer\request-list-params.ts', 'features\customer\request-list-params.spec.ts',
+        'features\customer\request-form.ts', 'features\customer\request-form.spec.ts',
+        'features\customer\request-editor.ts', 'features\customer\my-requests.ts', 'features\customer\request-detail.ts',
+        'features\provider\feed-params.ts', 'features\provider\feed-params.spec.ts',
+        'features\provider\provider-feed.ts', 'features\provider\feed-detail.ts'
+    )
 }
 $names = @($batches.Keys)
 
@@ -57,10 +66,10 @@ foreach ($name in $names) {
 $older = @(
     'core\models\auth.models.ts', 'core\api\api-error.ts', 'core\api\api-error.spec.ts',
     'core\api\apply-server-errors.ts', 'features\auth\login.ts', 'features\auth\register.ts',
-    'features\auth\forgot-password.ts', 'features\auth\reset-password.ts'
+    'features\auth\forgot-password.ts', 'features\auth\reset-password.ts', 'features\customer\customer-dashboard.ts'
 )
 $known = $expected + $older
-$folders = 'core\models\', 'core\api\', 'features\marketplace\', 'features\provider\', 'features\auth\', 'features\admin\', 'shared\'
+$folders = 'core\models\', 'core\api\', 'features\marketplace\', 'features\provider\', 'features\auth\', 'features\admin\', 'features\customer\', 'shared\'
 
 $actual = Get-ChildItem $app -Recurse -File -Filter *.ts | ForEach-Object { $_.FullName.Substring($app.Length + 1) }
 $missing = @($expected | Where-Object { $actual -cnotcontains $_ })
@@ -68,6 +77,7 @@ $unexpected = @($actual | Where-Object {
     $path = $_
     (@($folders | Where-Object { $path.StartsWith($_) })).Count -gt 0 -and $known -cnotcontains $path
 })
+$empty = @($expected | Where-Object { ($actual -ccontains $_) -and ((Get-Item (Join-Path $app $_)).Length -eq 0) })
 
 $scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1', 'check-backend-files.ps1'
 $scriptsActual = Get-ChildItem (Join-Path $root 'Scripts') -File -Name
@@ -83,6 +93,10 @@ foreach ($file in $missing) {
     foreach ($hint in ($unexpected | Where-Object { (Split-Path $_) -eq $folder })) {
         Write-Host "   you may have created: $hint" -ForegroundColor Yellow
     }
+}
+foreach ($file in $empty) {
+    $problems++
+    Write-Host "EMPTY FILE (no code pasted yet): $file" -ForegroundColor Red
 }
 foreach ($file in $unexpected) {
     $problems++
@@ -103,4 +117,3 @@ if ($problems -eq 0) {
 }
 
 exit 1
-

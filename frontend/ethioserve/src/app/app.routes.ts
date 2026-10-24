@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+﻿import { Routes } from '@angular/router';
 import { guestGuard, roleGuard } from './core/guards/auth.guards';
 import { Roles } from './core/models/auth.models';
 
@@ -101,6 +101,42 @@ export const routes: Routes = [
     title: 'Services | EthioServe',
     canActivate: [roleGuard(Roles.Admin)],
     loadComponent: () => import('./features/admin/admin-services').then((m) => m.AdminServices),
+  },
+  {
+    path: 'customer/requests',
+    title: 'My requests | EthioServe',
+    canActivate: [roleGuard(Roles.Customer)],
+    loadComponent: () => import('./features/customer/my-requests').then((m) => m.MyRequests),
+  },
+  {
+    path: 'customer/requests/new',
+    title: 'New request | EthioServe',
+    canActivate: [roleGuard(Roles.Customer)],
+    loadComponent: () => import('./features/customer/request-editor').then((m) => m.RequestEditor),
+  },
+  {
+    path: 'customer/requests/:id/edit',
+    title: 'Edit request | EthioServe',
+    canActivate: [roleGuard(Roles.Customer)],
+    loadComponent: () => import('./features/customer/request-editor').then((m) => m.RequestEditor),
+  },
+  {
+    path: 'customer/requests/:id',
+    title: 'Request | EthioServe',
+    canActivate: [roleGuard(Roles.Customer)],
+    loadComponent: () => import('./features/customer/request-detail').then((m) => m.RequestDetailPage),
+  },
+  {
+    path: 'provider/requests',
+    title: 'Customer requests | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-feed').then((m) => m.ProviderFeed),
+  },
+  {
+    path: 'provider/requests/:id',
+    title: 'Request | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/feed-detail').then((m) => m.FeedDetailPage),
   },
   {
     path: 'forbidden',

@@ -25,7 +25,7 @@ if ($LASTEXITCODE -ne 0) {
 function Show-Problems([string[]]$lines) {
     $shown = 0
     for ($i = 0; $i -lt $lines.Count -and $shown -lt 8; $i++) {
-        if ($lines[$i] -cmatch '^\s+Failed ' -or $lines[$i] -match ': error ' -or $lines[$i] -match '\[ERROR\]') {
+        if ($lines[$i] -cmatch '^\s+Failed ' -or $lines[$i] -match ': error ' -or $lines[$i] -match '\[ERROR\]' -or $lines[$i] -cmatch '^\s*(FAIL|x |Error:|AssertionError)' -or $lines[$i] -match '\u00D7') {
             $end = [Math]::Min($i + 6, $lines.Count - 1)
             $lines[$i..$end]
             ''

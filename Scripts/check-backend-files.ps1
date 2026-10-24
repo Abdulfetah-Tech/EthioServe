@@ -29,7 +29,7 @@ $files = Get-ChildItem $backend -Recurse -Filter *.cs -File |
 # 1. A file named almost like a type inside it (one-letter slip, wrong capital) is a typo.
 foreach ($file in $files) {
     $content = Get-Content $file.FullName -Raw
-    if (-not $content) { continue }
+    if (-not $content) { $problems++; Write-Host "EMPTY FILE: $($file.FullName.Substring($backend.Length + 1))" -ForegroundColor Red; continue }
 
     $base = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
     $names = @([regex]::Matches($content, $typePattern) | ForEach-Object { $_.Groups[1].Value })
