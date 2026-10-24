@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using EthioServe.Domain.Common;
@@ -100,6 +100,12 @@ public sealed class ApiSession(ApiFactory factory)
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = await users.FindByEmailAsync(email);
             await users.AddToRolesAsync(user!, extraRoles);
+
+            // A real admin is only an admin. Keeping the Customer role would let test admins pass customer-only checks.
+            if (extraRoles.Contains(Roles.Admin))
+            {
+                await users.RemoveFromRoleAsync(user!, Roles.Customer);
+            }
         }
 
         // Sign in again so the access token carries the extra roles.

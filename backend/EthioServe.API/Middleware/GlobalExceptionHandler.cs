@@ -1,4 +1,4 @@
-using EthioServe.Application.Common.Exceptions;
+﻿using EthioServe.Application.Common.Exceptions;
 using EthioServe.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -32,6 +32,7 @@ public sealed class GlobalExceptionHandler(
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Access denied"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Conflict"),
             // Safety net: the database's unique indexes decided a race that the application checks could not.
             DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } }
                 => (StatusCodes.Status409Conflict, "Conflict"),
@@ -78,6 +79,7 @@ public sealed class GlobalExceptionHandler(
     {
         _ when status == StatusCodes.Status500InternalServerError =>
             "Something went wrong on our side. Please try again later.",
+        DbUpdateConcurrencyException => "This item was changed by someone else. Please reload and try again.",
         DbUpdateException => "This item conflicts with an existing one.",
         _ => exception.Message
     };

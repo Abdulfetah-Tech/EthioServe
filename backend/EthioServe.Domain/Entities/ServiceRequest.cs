@@ -5,6 +5,8 @@ namespace EthioServe.Domain.Entities;
 
 public sealed class ServiceRequest : AuditableEntity
 {
+    public const int MaxReasonLength = 500;
+
     private ServiceRequest() { }
 
     public ServiceRequest(
@@ -12,15 +14,7 @@ public sealed class ServiceRequest : AuditableEntity
         int regionId, int cityId, decimal? budgetMin = null, decimal? budgetMax = null,
         DateOnly? preferredDate = null, TimeOnly? preferredTime = null)
     {
-        if (budgetMin < 0 || budgetMax < 0)
-        {
-            throw new DomainException("Budget cannot be negative.");
-        }
-
-        if (budgetMax < budgetMin)
-        {
-            throw new DomainException("budgetMax cannot be less than budgetMin.");
-        }
+        ValidateBudget(budgetMin, budgetMax);
 
         CustomerId = customerId;
         ServiceId = serviceId;
@@ -58,7 +52,7 @@ public sealed class ServiceRequest : AuditableEntity
 
     public int CityId { get; private set; }
 
-    /// <summary>Changed only through the state machine (Phase 5+), never directly by callers.</summary>
+    /// <summary>Changed only through the methods below, never directly by callers.</summary>
     public ServiceRequestStatus Status { get; private set; }
 
     public string? CancelledReason { get; private set; }
@@ -67,4 +61,69 @@ public sealed class ServiceRequest : AuditableEntity
 
     /// <summary>PostgreSQL xmin: optimistic concurrency token.</summary>
     public uint Version { get; private set; }
+
+    /// <summary>The customer can change the details only until a provider has responded. The service itself is fixed.</summary>
+    public void UpdateDetails(
+        string title, string description, string address, int regionId, int cityId,
+        decimal? budgetMin, decimal? budgetMax, DateOnly? preferredDate, TimeOnly? preferredTime)
+    {
+        if (Status != ServiceRequestStatus.Pending)
+        {
+            throw new DomainException($"A request that is {Status} can no longer be edited.");
+        }
+
+        ValidateBudget(budgetMin, budgetMax);
+
+        Title = Guard.NotBlank(title, nameof(title));
+        Description = Guard.NotBlank(description, nameof(description));
+        Address = Guard.NotBlank(address, nameof(address));
+        RegionId = regionId;
+        CityId = cityId;
+        BudgetMin = budgetMin;
+        BudgetMax = budgetMax;
+        PreferredDate = preferredDate;
+        PreferredTime = preferredTime;
+    }
+
+    /// <summary>The first provider quote arrived (used by the quote workflow in the next phase).</summary>
+    public void MarkQuoted()
+    {
+        if (Status != ServiceRequestStatus.Pending)
+        {
+            throw new DomainException($"A request that is {Status} cannot receive its first quote.");
+        }
+
+        Status = ServiceRequestStatus.Quoted;
+    }
+
+    public void Cancel(string? reason)
+    {
+        if (Status is not (ServiceRequestStatus.Pending or ServiceRequestStatus.Quoted))
+        {
+            throw new DomainException($"A request that is {Status} cannot be cancelled.");
+        }
+
+        var note = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+
+        if (note is { Length: > MaxReasonLength })
+        {
+            throw new DomainException($"The reason cannot be longer than {MaxReasonLength} characters.");
+        }
+
+        Status = ServiceRequestStatus.Cancelled;
+        CancelledReason = note;
+    }
+
+    private static void ValidateBudget(decimal? min, decimal? max)
+    {
+        if (min < 0 || max < 0)
+        {
+            throw new DomainException("Budget cannot be negative.");
+        }
+
+        if (max < min)
+        {
+            throw new DomainException("budgetMax cannot be less than budgetMin.");
+        }
+    }
 }
