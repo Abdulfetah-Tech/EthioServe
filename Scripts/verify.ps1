@@ -16,6 +16,12 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+$LASTEXITCODE = 0
+& (Join-Path $PSScriptRoot 'check-backend-files.ps1')
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nFix the backend file names above first, then run this again." -ForegroundColor Red
+    exit 1
+}
 function Show-Problems([string[]]$lines) {
     $shown = 0
     for ($i = 0; $i -lt $lines.Count -and $shown -lt 8; $i++) {
@@ -62,3 +68,4 @@ Step 'Frontend build' 'frontend\ethioserve'  { npm run build }
 Step 'Frontend tests' 'frontend\ethioserve'  { npm test -- --no-watch }
 
 Write-Host "`nALL CHECKS PASSED. Safe to commit." -ForegroundColor Green
+

@@ -69,7 +69,7 @@ $unexpected = @($actual | Where-Object {
     (@($folders | Where-Object { $path.StartsWith($_) })).Count -gt 0 -and $known -cnotcontains $path
 })
 
-$scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1'
+$scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1', 'check-backend-files.ps1'
 $scriptsActual = Get-ChildItem (Join-Path $root 'Scripts') -File -Name
 $scriptsMissing = @($scriptNames | Where-Object { $scriptsActual -cnotcontains $_ })
 $scriptsUnexpected = @($scriptsActual | Where-Object { $scriptNames -cnotcontains $_ })
@@ -103,3 +103,4 @@ if ($problems -eq 0) {
 }
 
 exit 1
+
