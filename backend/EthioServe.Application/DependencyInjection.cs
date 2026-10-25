@@ -6,6 +6,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using EthioServe.Application.Providers;
 using EthioServe.Application.Attachments;
+using EthioServe.Application.Quotes;
 using EthioServe.Application.Requests;
 
 namespace EthioServe.Application;
@@ -25,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRequestService, CustomerRequestService>();
         services.AddScoped<IProviderFeedService, ProviderFeedService>();
         services.AddScoped<IRequestAttachmentService, RequestAttachmentService>();
+        services.AddScoped<IProviderQuoteService, ProviderQuoteService>();
+        services.AddScoped<ICustomerQuoteService, CustomerQuoteService>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         return services;
     }

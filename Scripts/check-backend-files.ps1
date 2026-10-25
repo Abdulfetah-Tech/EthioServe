@@ -80,6 +80,23 @@ $batches['5.3'] = @(
     'EthioServe.Tests\Integration\AttachmentApiTests.cs'
 )
 
+$batches['6.1'] = @(
+    'EthioServe.Application\Quotes\QuoteModels.cs',
+    'EthioServe.Application\Quotes\QuoteStatusRules.cs',
+    'EthioServe.Application\Quotes\QuoteValidators.cs',
+    'EthioServe.Application\Quotes\ProviderQuoteService.cs',
+    'EthioServe.Application\Quotes\CustomerQuoteService.cs',
+    'EthioServe.API\Controllers\ProviderQuotesController.cs',
+    'EthioServe.API\Controllers\CustomerQuotesController.cs',
+    'EthioServe.Tests\Unit\QuoteDomainTests.cs',
+    'EthioServe.Tests\Unit\ServiceRequestQuoteTests.cs',
+    'EthioServe.Tests\Unit\QuoteStatusRulesTests.cs',
+    'EthioServe.Tests\Unit\QuoteValidatorTests.cs',
+    'EthioServe.Tests\Support\QuoteScenario.cs',
+    'EthioServe.Tests\Integration\QuoteApiTests.cs',
+    'EthioServe.Tests\Integration\QuoteConcurrencyTests.cs'
+)
+
 $checked = @()
 foreach ($name in $batches.Keys) {
     $paths = $batches[$name]

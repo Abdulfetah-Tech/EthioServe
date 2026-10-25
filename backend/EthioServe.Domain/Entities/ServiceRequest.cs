@@ -96,6 +96,31 @@ public sealed class ServiceRequest : AuditableEntity
         Status = ServiceRequestStatus.Quoted;
     }
 
+    /// <summary>
+    /// The customer chose a quote. A request normally becomes Quoted with its first quote; Pending is accepted too, so a
+    /// race between withdrawing the last quote and receiving a new one can never strand a valid quote.
+    /// </summary>
+    public void AcceptQuote()
+    {
+        if (Status is not (ServiceRequestStatus.Pending or ServiceRequestStatus.Quoted))
+        {
+            throw new DomainException($"A request that is {Status} cannot accept a quote.");
+        }
+
+        Status = ServiceRequestStatus.Accepted;
+    }
+
+    /// <summary>The last open quote went away (withdrawn or declined), so the request waits for quotes again.</summary>
+    public void ReopenForQuotes()
+    {
+        if (Status != ServiceRequestStatus.Quoted)
+        {
+            throw new DomainException($"A request that is {Status} cannot be reopened for quotes.");
+        }
+
+        Status = ServiceRequestStatus.Pending;
+    }
+
     public void Cancel(string? reason)
     {
         if (Status is not (ServiceRequestStatus.Pending or ServiceRequestStatus.Quoted))

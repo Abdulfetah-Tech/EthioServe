@@ -26,6 +26,13 @@ public interface IApplicationDbContext
     DbSet<ServiceRequest> ServiceRequests { get; }
 
     DbSet<RequestAttachment> RequestAttachments { get; }
+
+    DbSet<Quote> Quotes { get; }
+
+    DbSet<CustomerProfile> CustomerProfiles { get; }
+
+    /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
+    void DiscardChanges();
     DbSet<AuditLog> AuditLogs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

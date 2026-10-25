@@ -55,6 +55,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
+    /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
+    public void DiscardChanges() => ChangeTracker.Clear();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         StampTimestamps();
