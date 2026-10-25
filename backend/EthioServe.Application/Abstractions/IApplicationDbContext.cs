@@ -1,4 +1,4 @@
-﻿using EthioServe.Domain.Entities;
+using EthioServe.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace EthioServe.Application.Abstractions;
@@ -24,6 +24,8 @@ public interface IApplicationDbContext
     DbSet<ProviderService> ProviderServices { get; }
 
     DbSet<ServiceRequest> ServiceRequests { get; }
+
+    DbSet<RequestAttachment> RequestAttachments { get; }
     DbSet<AuditLog> AuditLogs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

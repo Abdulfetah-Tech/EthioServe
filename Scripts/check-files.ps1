@@ -1,4 +1,4 @@
-﻿param([string]$UpTo = '')
+param([string]$UpTo = '')
 
 $root = Split-Path -Parent $PSScriptRoot
 $app = Join-Path $root 'frontend\ethioserve\src\app'
@@ -43,6 +43,11 @@ $batches = [ordered]@{
         'features\provider\provider-feed.ts', 'features\provider\feed-detail.ts'
     )
 }
+$batches['5.3'] = @(
+    'core\models\attachment.models.ts', 'core\api\attachment.api.ts', 'core\api\attachment.api.spec.ts',
+    'shared\attachment-rules.ts', 'shared\attachment-rules.spec.ts', 'shared\attachment-image.ts',
+    'shared\request-photos.ts', 'shared\request-photos.spec.ts'
+)
 $names = @($batches.Keys)
 
 # Without -UpTo, the newest batch that has at least one file is the one being worked on.

@@ -6,11 +6,12 @@ import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { LOADING, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
 import { budgetText, statusBadge, statusLabel, whenText } from '../customer/request-status';
+import { RequestPhotos } from '../../shared/request-photos';
 import { ProviderNav } from './provider-nav';
 
 @Component({
   selector: 'app-feed-detail',
-  imports: [DatePipe, RouterLink, ProviderNav],
+  imports: [DatePipe, RouterLink, ProviderNav, RequestPhotos],
   template: `
     <div class="stack">
       <app-provider-nav />
@@ -50,6 +51,11 @@ import { ProviderNav } from './provider-nav';
           </dl>
           <h3>Description</h3>
           <p>{{ s.data.description }}</p>
+        </section>
+
+        <section class="card" aria-labelledby="photos-heading">
+          <h2 id="photos-heading">Photos</h2>
+          <app-request-photos [requestId]="s.data.id" [editable]="false" />
         </section>
 
         <section class="card" aria-labelledby="quote-heading">

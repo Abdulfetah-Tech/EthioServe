@@ -1,4 +1,4 @@
-﻿param([string]$Batch = '')
+param([string]$Batch = '')
 
 $root = Split-Path -Parent $PSScriptRoot
 $backend = Join-Path $root 'backend'
@@ -64,6 +64,21 @@ $batches = [ordered]@{
         'EthioServe.Tests\Integration\ProviderFeedApiTests.cs'
     )
 }
+
+$batches['5.3'] = @(
+    'EthioServe.Application\Abstractions\IFileStorage.cs',
+    'EthioServe.Application\Attachments\ImageSniffer.cs',
+    'EthioServe.Application\Attachments\AttachmentRules.cs',
+    'EthioServe.Application\Attachments\AttachmentModels.cs',
+    'EthioServe.Application\Attachments\RequestAttachmentService.cs',
+    'EthioServe.Infrastructure\Storage\LocalFileStorage.cs',
+    'EthioServe.API\Controllers\AttachmentsController.cs',
+    'EthioServe.Tests\Unit\ImageSnifferTests.cs',
+    'EthioServe.Tests\Unit\AttachmentRulesTests.cs',
+    'EthioServe.Tests\Integration\LocalFileStorageTests.cs',
+    'EthioServe.Tests\Support\AttachmentScenario.cs',
+    'EthioServe.Tests\Integration\AttachmentApiTests.cs'
+)
 
 $checked = @()
 foreach ($name in $batches.Keys) {

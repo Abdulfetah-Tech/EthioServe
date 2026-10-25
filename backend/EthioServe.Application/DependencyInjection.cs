@@ -1,10 +1,11 @@
-﻿using EthioServe.Application.Auth;
+using EthioServe.Application.Auth;
 using EthioServe.Application.Catalog;
 using EthioServe.Application.Common;
 using EthioServe.Application.Locations;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using EthioServe.Application.Providers;
+using EthioServe.Application.Attachments;
 using EthioServe.Application.Requests;
 
 namespace EthioServe.Application;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IProviderSearchQueries, ProviderSearchQueries>();
         services.AddScoped<ICustomerRequestService, CustomerRequestService>();
         services.AddScoped<IProviderFeedService, ProviderFeedService>();
+        services.AddScoped<IRequestAttachmentService, RequestAttachmentService>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         return services;
     }

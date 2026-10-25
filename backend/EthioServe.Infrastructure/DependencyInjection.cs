@@ -24,6 +24,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddSingleton<EthioServe.Application.Abstractions.IFileStorage>(sp => new EthioServe.Infrastructure.Storage.LocalFileStorage(sp.GetService<Microsoft.Extensions.Configuration.IConfiguration>()?["Storage:RootPath"]));
         // Fails fast at startup if the JWT settings are missing or invalid (for example, no signing key).
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))

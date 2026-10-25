@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 .env
 *.local
 
+
+.data/
+
+uploads/

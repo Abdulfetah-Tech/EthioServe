@@ -8,11 +8,12 @@ import { toApiError } from '../../core/api/api-error';
 import { LOADING, LoadState, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
 import { RequestDetail } from '../../core/models/request.models';
+import { RequestPhotos } from '../../shared/request-photos';
 import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel, whenText } from './request-status';
 
 @Component({
   selector: 'app-request-detail',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, RequestPhotos],
   template: `
     @let s = detail();
     @if (s.kind === 'loading') {
@@ -60,6 +61,11 @@ import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel,
           </dl>
           <h3>Description</h3>
           <p>{{ s.data.description }}</p>
+        </section>
+
+        <section class="card" aria-labelledby="photos-heading">
+          <h2 id="photos-heading">Photos</h2>
+          <app-request-photos [requestId]="s.data.id" [editable]="canEdit(s.data.status)" />
         </section>
 
         <section class="card" aria-labelledby="next-heading">
