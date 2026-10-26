@@ -9,11 +9,12 @@ import { LOADING, LoadState, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
 import { RequestDetail } from '../../core/models/request.models';
 import { RequestPhotos } from '../../shared/request-photos';
+import { RequestQuotes } from './request-quotes';
 import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel, whenText } from './request-status';
 
 @Component({
   selector: 'app-request-detail',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, RequestPhotos],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, RequestPhotos, RequestQuotes],
   template: `
     @let s = detail();
     @if (s.kind === 'loading') {
@@ -61,6 +62,11 @@ import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel,
           </dl>
           <h3>Description</h3>
           <p>{{ s.data.description }}</p>
+        </section>
+
+        <section class="card" aria-labelledby="quotes-heading">
+          <h2 id="quotes-heading">Quotes</h2>
+          <app-request-quotes [requestId]="s.data.id" [requestStatus]="s.data.status" (changed)="reload(s.data.id)" />
         </section>
 
         <section class="card" aria-labelledby="photos-heading">
@@ -134,6 +140,10 @@ export class RequestDetailPage {
         takeUntilDestroyed(),
       )
       .subscribe((state) => this.detail.set(state));
+  }
+
+  protected reload(id: string): void {
+    this.api.get(id).subscribe({ next: (data) => this.detail.set({ kind: 'ready', data }) });
   }
 
   protected openCancel(): void {

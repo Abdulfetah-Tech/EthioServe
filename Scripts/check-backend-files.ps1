@@ -97,6 +97,10 @@ $batches['6.1'] = @(
     'EthioServe.Tests\Integration\QuoteConcurrencyTests.cs'
 )
 
+$batches['6.2'] = @(
+    'EthioServe.Tests\Integration\QuoteFilterApiTests.cs'
+)
+
 $checked = @()
 foreach ($name in $batches.Keys) {
     $paths = $batches[$name]

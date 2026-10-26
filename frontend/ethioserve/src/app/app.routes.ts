@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { guestGuard, roleGuard } from './core/guards/auth.guards';
 import { Roles } from './core/models/auth.models';
 
@@ -137,6 +137,18 @@ export const routes: Routes = [
     title: 'Request | EthioServe',
     canActivate: [roleGuard(Roles.Provider)],
     loadComponent: () => import('./features/provider/feed-detail').then((m) => m.FeedDetailPage),
+  },
+  {
+    path: 'provider/quotes',
+    title: 'My quotes | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/my-quotes').then((m) => m.MyQuotes),
+  },
+  {
+    path: 'provider/quotes/:id',
+    title: 'Quote | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-quote-detail').then((m) => m.ProviderQuoteDetail),
   },
   {
     path: 'forbidden',

@@ -44,6 +44,8 @@ public sealed record QuoteDto(
 /// <summary>Bound from the query string. Paging values are clamped by <see cref="Paging.Normalize"/>.</summary>
 public sealed class ProviderQuoteQuery
 {
+    public Guid? RequestId { get; set; }
+
     public int Page { get; set; } = 1;
 
     public int PageSize { get; set; } = Paging.DefaultPageSize;

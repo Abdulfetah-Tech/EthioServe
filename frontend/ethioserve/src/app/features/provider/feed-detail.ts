@@ -7,11 +7,12 @@ import { LOADING, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
 import { budgetText, statusBadge, statusLabel, whenText } from '../customer/request-status';
 import { RequestPhotos } from '../../shared/request-photos';
+import { ProviderQuoteBox } from './provider-quote-box';
 import { ProviderNav } from './provider-nav';
 
 @Component({
   selector: 'app-feed-detail',
-  imports: [DatePipe, RouterLink, ProviderNav, RequestPhotos],
+  imports: [DatePipe, RouterLink, ProviderNav, RequestPhotos, ProviderQuoteBox],
   template: `
     <div class="stack">
       <app-provider-nav />
@@ -59,11 +60,8 @@ import { ProviderNav } from './provider-nav';
         </section>
 
         <section class="card" aria-labelledby="quote-heading">
-          <h2 id="quote-heading">Respond to this request</h2>
-          <p class="muted">
-            Sending a quote opens in the next release. The customer's address and contact details are shared only after
-            they accept your quote.
-          </p>
+          <h2 id="quote-heading">Your quote</h2>
+          <app-provider-quote-box [requestId]="s.data.id" />
         </section>
       }
     </div>

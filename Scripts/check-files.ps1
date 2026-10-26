@@ -48,6 +48,14 @@ $batches['5.3'] = @(
     'shared\attachment-rules.ts', 'shared\attachment-rules.spec.ts', 'shared\attachment-image.ts',
     'shared\request-photos.ts', 'shared\request-photos.spec.ts'
 )
+$batches['6.2'] = @(
+    'core\models\quote.models.ts', 'core\api\quote.api.ts', 'core\api\quote.api.spec.ts',
+    'shared\quote-format.ts', 'shared\quote-format.spec.ts',
+    'features\provider\quote-form.ts', 'features\provider\quote-form.spec.ts',
+    'features\provider\provider-quote-view.ts', 'features\provider\provider-quote-box.ts',
+    'features\provider\my-quotes.ts', 'features\provider\provider-quote-detail.ts',
+    'features\customer\request-quotes.ts', 'features\customer\request-quotes.spec.ts'
+)
 $names = @($batches.Keys)
 
 # Without -UpTo, the newest batch that has at least one file is the one being worked on.

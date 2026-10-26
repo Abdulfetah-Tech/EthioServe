@@ -88,6 +88,11 @@ public sealed class ProviderQuoteService(
         var (page, pageSize) = Paging.Normalize(query.Page, query.PageSize);
 
         var rows = Rows(providerId);
+
+        if (query.RequestId is { } requestId)
+        {
+            rows = rows.Where(x => x.RequestId == requestId);
+        }
         var total = await rows.CountAsync(ct);
 
         var pageRows = await rows

@@ -80,13 +80,13 @@ export function whenText(date: string | null, time: string | null): string {
 export function nextStepText(status: RequestStatus): string {
   switch (status) {
     case 'Pending':
-      return 'Verified providers who offer this service in your city can see your request, without your address or contact details. Their quotes will appear here in the next release. Until a provider responds you can still edit or cancel it.';
+      return 'Verified providers who offer this service in your city can see your request, without your address or contact details. Their quotes will appear here. Until a provider responds you can still edit or cancel it.';
     case 'Quoted':
-      return 'Providers have responded. Compare their quotes and accept the one you like. You can still cancel.';
+      return 'Providers have responded. Compare their quotes below and accept the one you like. You can still cancel.';
     case 'Accepted':
     case 'Scheduled':
     case 'InProgress':
-      return 'A provider is on the job. You will see the appointment details here.';
+      return 'You accepted a quote, so the provider has your contact details and will arrange the visit. Appointment details will appear here.';
     case 'Completed':
       return 'This job is finished.';
     case 'Cancelled':
