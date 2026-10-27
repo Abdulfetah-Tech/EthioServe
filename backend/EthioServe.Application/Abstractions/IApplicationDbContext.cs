@@ -29,6 +29,8 @@ public interface IApplicationDbContext
 
     DbSet<Quote> Quotes { get; }
 
+    DbSet<Appointment> Appointments { get; }
+
     DbSet<CustomerProfile> CustomerProfiles { get; }
 
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>

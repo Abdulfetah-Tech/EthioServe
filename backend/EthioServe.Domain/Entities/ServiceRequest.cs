@@ -121,6 +121,49 @@ public sealed class ServiceRequest : AuditableEntity
         Status = ServiceRequestStatus.Pending;
     }
 
+    /// <summary>The provider proposed a time for the accepted job.</summary>
+    public void MarkScheduled()
+    {
+        if (Status != ServiceRequestStatus.Accepted)
+        {
+            throw new DomainException($"A request that is {Status} cannot be scheduled.");
+        }
+
+        Status = ServiceRequestStatus.Scheduled;
+    }
+
+    /// <summary>The appointment was cancelled, so the accepted job needs a new time.</summary>
+    public void ReturnToAccepted()
+    {
+        if (Status != ServiceRequestStatus.Scheduled)
+        {
+            throw new DomainException($"A request that is {Status} cannot go back to waiting for a time.");
+        }
+
+        Status = ServiceRequestStatus.Accepted;
+    }
+
+    public void StartWork()
+    {
+        if (Status != ServiceRequestStatus.Scheduled)
+        {
+            throw new DomainException($"A request that is {Status} cannot be started.");
+        }
+
+        Status = ServiceRequestStatus.InProgress;
+    }
+
+    public void Complete(DateTimeOffset now)
+    {
+        if (Status != ServiceRequestStatus.InProgress)
+        {
+            throw new DomainException($"A request that is {Status} cannot be completed.");
+        }
+
+        Status = ServiceRequestStatus.Completed;
+        CompletedAt = now;
+    }
+
     public void Cancel(string? reason)
     {
         if (Status is not (ServiceRequestStatus.Pending or ServiceRequestStatus.Quoted))

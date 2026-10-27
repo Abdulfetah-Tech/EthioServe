@@ -1,4 +1,4 @@
-﻿using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Common.Exceptions;
 using EthioServe.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -34,7 +34,7 @@ public sealed class GlobalExceptionHandler(
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Conflict"),
             // Safety net: the database's unique indexes decided a race that the application checks could not.
-            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } }
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ExclusionViolation } }
                 => (StatusCodes.Status409Conflict, "Conflict"),
             DomainException => (StatusCodes.Status422UnprocessableEntity, "Business rule violation"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
@@ -80,6 +80,8 @@ public sealed class GlobalExceptionHandler(
         _ when status == StatusCodes.Status500InternalServerError =>
             "Something went wrong on our side. Please try again later.",
         DbUpdateConcurrencyException => "This item was changed by someone else. Please reload and try again.",
+        DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.ExclusionViolation } } =>
+            "That time was just taken by another appointment. Please choose a different time.",
         DbUpdateException => "This item conflicts with an existing one.",
         _ => exception.Message
     };

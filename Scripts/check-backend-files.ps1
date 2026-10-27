@@ -101,6 +101,24 @@ $batches['6.2'] = @(
     'EthioServe.Tests\Integration\QuoteFilterApiTests.cs'
 )
 
+$batches['7.1'] = @(
+    'EthioServe.Application\Appointments\AppointmentRules.cs',
+    'EthioServe.Application\Appointments\AppointmentModels.cs',
+    'EthioServe.Application\Appointments\AppointmentValidators.cs',
+    'EthioServe.Application\Appointments\AppointmentProjections.cs',
+    'EthioServe.Application\Appointments\ProviderAppointmentService.cs',
+    'EthioServe.Application\Appointments\CustomerAppointmentService.cs',
+    'EthioServe.API\Controllers\ProviderAppointmentsController.cs',
+    'EthioServe.API\Controllers\CustomerAppointmentsController.cs',
+    'EthioServe.Tests\Unit\AppointmentDomainTests.cs',
+    'EthioServe.Tests\Unit\ServiceRequestAppointmentTests.cs',
+    'EthioServe.Tests\Unit\AppointmentRulesTests.cs',
+    'EthioServe.Tests\Unit\AppointmentValidatorTests.cs',
+    'EthioServe.Tests\Support\AppointmentScenario.cs',
+    'EthioServe.Tests\Integration\AppointmentApiTests.cs',
+    'EthioServe.Tests\Integration\AppointmentConcurrencyTests.cs'
+)
+
 $checked = @()
 foreach ($name in $batches.Keys) {
     $paths = $batches[$name]

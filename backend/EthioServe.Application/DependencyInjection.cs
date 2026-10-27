@@ -5,6 +5,7 @@ using EthioServe.Application.Locations;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using EthioServe.Application.Providers;
+using EthioServe.Application.Appointments;
 using EthioServe.Application.Attachments;
 using EthioServe.Application.Quotes;
 using EthioServe.Application.Requests;
@@ -28,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IRequestAttachmentService, RequestAttachmentService>();
         services.AddScoped<IProviderQuoteService, ProviderQuoteService>();
         services.AddScoped<ICustomerQuoteService, CustomerQuoteService>();
+        services.AddScoped<IProviderAppointmentService, ProviderAppointmentService>();
+        services.AddScoped<ICustomerAppointmentService, CustomerAppointmentService>();
         services.AddScoped<IAuditTrail, AuditTrail>();
         return services;
     }
