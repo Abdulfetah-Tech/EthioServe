@@ -151,6 +151,24 @@ export const routes: Routes = [
     loadComponent: () => import('./features/provider/provider-quote-detail').then((m) => m.ProviderQuoteDetail),
   },
   {
+    path: 'provider/appointments',
+    title: 'Appointments | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-appointments').then((m) => m.ProviderAppointments),
+  },
+  {
+    path: 'provider/appointments/:id',
+    title: 'Appointment | EthioServe',
+    canActivate: [roleGuard(Roles.Provider)],
+    loadComponent: () => import('./features/provider/provider-appointment-detail').then((m) => m.ProviderAppointmentDetail),
+  },
+  {
+    path: 'customer/appointments',
+    title: 'Appointments | EthioServe',
+    canActivate: [roleGuard(Roles.Customer)],
+    loadComponent: () => import('./features/customer/my-appointments').then((m) => m.MyAppointments),
+  },
+  {
     path: 'forbidden',
     title: 'Access denied | EthioServe',
     loadComponent: () => import('./features/errors/forbidden').then((m) => m.Forbidden),

@@ -56,6 +56,17 @@ $batches['6.2'] = @(
     'features\provider\my-quotes.ts', 'features\provider\provider-quote-detail.ts',
     'features\customer\request-quotes.ts', 'features\customer\request-quotes.spec.ts'
 )
+$batches['7.2'] = @(
+    'core\models\appointment.models.ts', 'core\api\appointment.api.ts', 'core\api\appointment.api.spec.ts',
+    'shared\appointment-format.ts', 'shared\appointment-format.spec.ts',
+    'shared\appointment-list-params.ts', 'shared\appointment-list-params.spec.ts',
+    'features\provider\appointment-scheduler.ts',
+    'features\provider\provider-appointment-view.ts', 'features\provider\provider-appointment-view.spec.ts',
+    'features\provider\provider-job.ts', 'features\provider\provider-appointments.ts',
+    'features\provider\provider-appointment-detail.ts',
+    'features\customer\customer-appointment-box.ts', 'features\customer\customer-appointment-box.spec.ts',
+    'features\customer\my-appointments.ts'
+)
 $names = @($batches.Keys)
 
 # Without -UpTo, the newest batch that has at least one file is the one being worked on.

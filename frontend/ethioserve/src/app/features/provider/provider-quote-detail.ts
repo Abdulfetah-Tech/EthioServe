@@ -6,11 +6,12 @@ import { LOADING, LoadState, toLoadState } from '../../core/api/load-state';
 import { QuoteApi } from '../../core/api/quote.api';
 import { ProviderQuote } from '../../core/models/quote.models';
 import { ProviderNav } from './provider-nav';
+import { ProviderJob } from './provider-job';
 import { ProviderQuoteView } from './provider-quote-view';
 
 @Component({
   selector: 'app-provider-quote-detail',
-  imports: [RouterLink, ProviderNav, ProviderQuoteView],
+  imports: [RouterLink, ProviderNav, ProviderQuoteView, ProviderJob],
   template: `
     <div class="stack">
       <app-provider-nav />
@@ -39,6 +40,13 @@ import { ProviderQuoteView } from './provider-quote-view';
           <h2 id="quote-heading">Your quote</h2>
           <app-provider-quote-view [quote]="s.data" (updated)="onUpdated($event)" />
         </section>
+
+        @if (s.data.status === 'Accepted') {
+          <section class="card" aria-labelledby="job-heading">
+            <h2 id="job-heading">The job</h2>
+            <app-provider-job [requestId]="s.data.requestId" />
+          </section>
+        }
       }
     </div>
   `,

@@ -9,12 +9,14 @@ import { LOADING, LoadState, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
 import { RequestDetail } from '../../core/models/request.models';
 import { RequestPhotos } from '../../shared/request-photos';
+import { hasAppointmentSection } from '../../shared/appointment-format';
+import { CustomerAppointmentBox } from './customer-appointment-box';
 import { RequestQuotes } from './request-quotes';
 import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel, whenText } from './request-status';
 
 @Component({
   selector: 'app-request-detail',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, RequestPhotos, RequestQuotes],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, RequestPhotos, RequestQuotes, CustomerAppointmentBox],
   template: `
     @let s = detail();
     @if (s.kind === 'loading') {
@@ -69,6 +71,13 @@ import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel,
           <app-request-quotes [requestId]="s.data.id" [requestStatus]="s.data.status" (changed)="reload(s.data.id)" />
         </section>
 
+        @if (hasAppointment(s.data.status)) {
+          <section class="card" aria-labelledby="appointment-heading">
+            <h2 id="appointment-heading">Appointment</h2>
+            <app-customer-appointment-box [requestId]="s.data.id" [requestStatus]="s.data.status" (changed)="reload(s.data.id)" />
+          </section>
+        }
+
         <section class="card" aria-labelledby="photos-heading">
           <h2 id="photos-heading">Photos</h2>
           <app-request-photos [requestId]="s.data.id" [editable]="canEdit(s.data.status)" />
@@ -122,6 +131,7 @@ export class RequestDetailPage {
   protected readonly nextStep = nextStepText;
   protected readonly canEdit = canEdit;
   protected readonly canCancel = canCancel;
+  protected readonly hasAppointment = hasAppointmentSection;
 
   protected readonly detail = signal<LoadState<RequestDetail>>(LOADING);
   protected readonly cancelling = signal(false);

@@ -84,9 +84,11 @@ export function nextStepText(status: RequestStatus): string {
     case 'Quoted':
       return 'Providers have responded. Compare their quotes below and accept the one you like. You can still cancel.';
     case 'Accepted':
+      return 'You accepted a quote, so the provider has your contact details. They will propose a time for the visit, and you will confirm it below.';
     case 'Scheduled':
+      return 'The provider proposed a time. Confirm it below, or cancel the appointment to ask for another.';
     case 'InProgress':
-      return 'You accepted a quote, so the provider has your contact details and will arrange the visit. Appointment details will appear here.';
+      return 'The provider is working on your job.';
     case 'Completed':
       return 'This job is finished.';
     case 'Cancelled':
