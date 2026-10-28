@@ -33,4 +33,7 @@ public sealed class Notification : BaseEntity
     public string? RelatedEntityType { get; private set; }
 
     public Guid? RelatedEntityId { get; private set; }
+
+    /// <summary>Marking a notification that is already read is not an error.</summary>
+    public void MarkRead() => IsRead = true;
 }

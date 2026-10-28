@@ -1,6 +1,7 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Common;
 using EthioServe.Domain.Entities;
 using EthioServe.Domain.Enums;
@@ -15,6 +16,7 @@ public sealed class ProviderAppointmentService(
     ICurrentUser currentUser,
     IAuditTrail audit,
     IClock clock,
+    INotifier notifier,
     IValidator<ScheduleAppointmentRequest> scheduleValidator,
     IValidator<RescheduleAppointmentRequest> rescheduleValidator) : IProviderAppointmentService
 {
@@ -55,6 +57,10 @@ public sealed class ProviderAppointmentService(
         serviceRequest.MarkScheduled();
         db.Appointments.Add(appointment);
         audit.Record("AppointmentScheduled", nameof(Appointment), appointment.Id, null, Snapshot(appointment));
+        await notifier.ToCustomerAsync(
+            serviceRequest.CustomerId, NotificationType.AppointmentUpdated, "A time was proposed",
+            "A time was proposed for \"" + serviceRequest.Title + "\": " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
+            "ServiceRequest", serviceRequest.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(appointment.Id, ct);
@@ -96,12 +102,13 @@ public sealed class ProviderAppointmentService(
         return ToDto(row);
     }
 
-    public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleAppointmentRequest request, CancellationToken ct = default)
+public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleAppointmentRequest request, CancellationToken ct = default)
     {
         var providerId = ProviderId;
         await rescheduleValidator.ValidateAndThrowAsync(request, ct);
 
         var appointment = await FindAsync(id, providerId, ct);
+        var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == appointment.ServiceRequestId, ct);
         var start = AppointmentRules.Normalize(request.StartAt);
 
         if (AppointmentRules.StartProblem(start, clock.UtcNow) is { } problem)
@@ -121,6 +128,10 @@ public sealed class ProviderAppointmentService(
         await EnsureFreeAsync(providerId, start, end, id, ct);
 
         audit.Record("AppointmentRescheduled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToCustomerAsync(
+            appointment.CustomerId, NotificationType.AppointmentUpdated, "The time was changed",
+            "The time for \"" + serviceRequest.Title + "\" was changed to " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
+            "ServiceRequest", serviceRequest.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -132,11 +143,15 @@ public sealed class ProviderAppointmentService(
         var appointment = await FindAsync(id, providerId, ct);
         var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == appointment.ServiceRequestId, ct);
 
-        var before = Snapshot(appointment);
+var before = Snapshot(appointment);
         appointment.Cancel();            // 422 unless it is Scheduled or Confirmed
         serviceRequest.ReturnToAccepted(); // the job waits for a new time
 
         audit.Record("AppointmentCancelled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToCustomerAsync(
+            appointment.CustomerId, NotificationType.AppointmentUpdated, "Appointment cancelled",
+            "The provider cancelled the appointment for \"" + serviceRequest.Title + "\". You can accept another quote and choose a new time.",
+            "ServiceRequest", appointment.ServiceRequestId, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -157,9 +172,13 @@ public sealed class ProviderAppointmentService(
                 $"You can start the job up to 2 hours before the agreed time ({AppointmentRules.FormatLocal(appointment.StartAt)}, Addis Ababa time).");
         }
 
-        serviceRequest.StartWork();
+serviceRequest.StartWork();
 
         audit.Record("AppointmentStarted", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToCustomerAsync(
+            appointment.CustomerId, NotificationType.AppointmentUpdated, "The job has started",
+            "The provider started the job for \"" + serviceRequest.Title + "\". Keep your phone nearby.",
+            "ServiceRequest", appointment.ServiceRequestId, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -173,9 +192,13 @@ public sealed class ProviderAppointmentService(
 
         var before = Snapshot(appointment);
         appointment.Complete(); // 422 unless the job is in progress
-        serviceRequest.Complete(clock.UtcNow);
+serviceRequest.Complete(clock.UtcNow);
 
         audit.Record("AppointmentCompleted", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToCustomerAsync(
+            appointment.CustomerId, NotificationType.AppointmentUpdated, "The job is complete",
+            "The provider marked the job for \"" + serviceRequest.Title + "\" as complete. Please leave a review.",
+            "ServiceRequest", appointment.ServiceRequestId, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);

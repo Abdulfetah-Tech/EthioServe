@@ -34,6 +34,9 @@ public sealed class GlobalExceptionHandler(
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Conflict"),
             // Safety net: the database's unique indexes decided a race that the application checks could not.
+            // Two bookings racing for the same slot can deadlock inside PostgreSQL. The loser is simply told to try again.
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.SerializationFailure } }
+                => (StatusCodes.Status409Conflict, "Conflict"),
             DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ExclusionViolation } }
                 => (StatusCodes.Status409Conflict, "Conflict"),
             DomainException => (StatusCodes.Status422UnprocessableEntity, "Business rule violation"),
@@ -80,6 +83,8 @@ public sealed class GlobalExceptionHandler(
         _ when status == StatusCodes.Status500InternalServerError =>
             "Something went wrong on our side. Please try again later.",
         DbUpdateConcurrencyException => "This item was changed by someone else. Please reload and try again.",
+        DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.SerializationFailure } } =>
+            "Another change was being saved at the same moment. Please try again.",
         DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.ExclusionViolation } } =>
             "That time was just taken by another appointment. Please choose a different time.",
         DbUpdateException => "This item conflicts with an existing one.",

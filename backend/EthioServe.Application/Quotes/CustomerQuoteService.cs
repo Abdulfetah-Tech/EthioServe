@@ -1,6 +1,7 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Entities;
 using EthioServe.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ public sealed class CustomerQuoteService(
     IApplicationDbContext db,
     ICurrentUser currentUser,
     IAuditTrail audit,
-    IClock clock) : ICustomerQuoteService
+    IClock clock,
+    INotifier notifier) : ICustomerQuoteService
 {
     private sealed class Row
     {
@@ -88,12 +90,20 @@ public sealed class CustomerQuoteService(
         serviceRequest.AcceptQuote(); // 422 when the request is closed
 
         audit.Record("QuoteAccepted", nameof(Quote), chosen.Id, before, Snapshot(chosen));
+        await notifier.ToProviderAsync(
+            chosen.ProviderId, NotificationType.QuoteAccepted, "Your quote was accepted",
+            "The customer accepted your quote for \"" + serviceRequest.Title + "\". Open the quote to book a time.",
+            "Quote", chosen.Id, ct);
 
         foreach (var other in quotes.Where(q => q.Id != quoteId))
         {
             var otherBefore = Snapshot(other);
             other.Reject();
             audit.Record("QuoteRejected", nameof(Quote), other.Id, otherBefore, Snapshot(other));
+            await notifier.ToProviderAsync(
+                other.ProviderId, NotificationType.General, "Quote not chosen",
+                "The customer chose another quote for \"" + serviceRequest.Title + "\".",
+                "Quote", other.Id, ct);
         }
 
         await db.SaveChangesAsync(ct);
@@ -130,6 +140,10 @@ public sealed class CustomerQuoteService(
         }
 
         audit.Record("QuoteDeclined", nameof(Quote), quote.Id, before, Snapshot(quote));
+        await notifier.ToProviderAsync(
+            quote.ProviderId, NotificationType.General, "Quote declined",
+            "The customer declined your quote for \"" + serviceRequest.Title + "\".",
+            "Quote", quote.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetOneAsync(requestId, quoteId, ct);

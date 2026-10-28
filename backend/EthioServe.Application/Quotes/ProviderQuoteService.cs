@@ -1,6 +1,7 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Application.Requests;
 using EthioServe.Domain.Common;
 using EthioServe.Domain.Entities;
@@ -16,6 +17,7 @@ public sealed class ProviderQuoteService(
     IAuditTrail audit,
     IClock clock,
     IProviderFeedService feed,
+    INotifier notifier,
     IValidator<SubmitQuoteRequest> validator) : IProviderQuoteService
 {
     private const int MaxAttempts = 3;
@@ -193,6 +195,17 @@ public sealed class ProviderQuoteService(
         }
 
         audit.Record("QuoteSubmitted", nameof(Quote), quote.Id, null, Snapshot(quote));
+
+        var providerName = await db.ProviderProfiles.AsNoTracking()
+            .Where(p => p.Id == providerId)
+            .Select(p => p.BusinessName)
+            .FirstAsync(ct);
+
+        await notifier.ToCustomerAsync(
+            serviceRequest.CustomerId, NotificationType.QuoteReceived, "New quote received",
+            providerName + " sent a quote of " + quote.Amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)
+            + " ETB for \"" + serviceRequest.Title + "\".",
+            "ServiceRequest", serviceRequest.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return quote.Id;

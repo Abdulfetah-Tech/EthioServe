@@ -1,7 +1,9 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Entities;
+using EthioServe.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +13,7 @@ public sealed class AdminProviderService(
     IApplicationDbContext db,
     IAuditTrail audit,
     IClock clock,
+    INotifier notifier,
     IValidator<ReviewDecisionRequest> reasonValidator) : IAdminProviderService
 {
     private const int MaxSearchLength = 100;
@@ -108,9 +111,28 @@ public sealed class AdminProviderService(
         change(provider); // throws a DomainException (422) when the state machine does not allow this move
 
         audit.Record(action, nameof(ProviderProfile), provider.Id, before, Snapshot(provider));
+        await NotifyDecisionAsync(provider, action, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
+    }
+
+    private async Task NotifyDecisionAsync(ProviderProfile provider, string action, CancellationToken ct)
+    {
+        (string title, string message, NotificationType type)? decision = action switch
+        {
+            "ProviderApproved" => ("You are verified", "Your provider profile has been verified. You can now reply to customer requests.", NotificationType.ProviderVerified),
+            "ProviderRejected" => ("Verification not approved", provider.VerificationNote ?? "Your verification was not approved.", NotificationType.General),
+            "ProviderSuspended" => ("Your profile was suspended", provider.VerificationNote ?? "Your provider profile has been suspended.", NotificationType.General),
+            "ProviderReinstated" => ("You are verified again", "Your provider profile has been reinstated.", NotificationType.ProviderVerified),
+            _ => null
+        };
+
+        if (decision is { } d)
+        {
+            await notifier.ToProviderAsync(
+                provider.Id, d.type, d.title, d.message, "ProviderProfile", provider.Id, ct);
+        }
     }
 
     private static object Snapshot(ProviderProfile p) => new { p.VerificationStatus, p.VerificationNote };

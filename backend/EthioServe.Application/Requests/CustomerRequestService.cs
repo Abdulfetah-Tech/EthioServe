@@ -1,6 +1,7 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Common;
 using EthioServe.Domain.Entities;
 using EthioServe.Domain.Enums;
@@ -15,6 +16,7 @@ public sealed class CustomerRequestService(
     ICurrentUser currentUser,
     IAuditTrail audit,
     IClock clock,
+    INotifier notifier,
     IValidator<CreateJobRequest> createValidator,
     IValidator<UpdateJobRequest> updateValidator,
     IValidator<CancelJobRequest> cancelValidator) : ICustomerRequestService
@@ -55,6 +57,10 @@ public sealed class CustomerRequestService(
 
         db.ServiceRequests.Add(entity);
         audit.Record("ServiceRequestCreated", nameof(ServiceRequest), entity.Id, null, Snapshot(entity));
+        await notifier.ToMatchingProvidersAsync(
+            entity.ServiceId, entity.CityId, "New request in your city",
+            "A customer asked for help: \"" + entity.Title + "\". Open it to see the details and send a quote.",
+            entity.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(entity.Id, ct);

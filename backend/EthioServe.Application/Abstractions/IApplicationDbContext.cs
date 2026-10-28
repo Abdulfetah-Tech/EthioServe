@@ -31,6 +31,8 @@ public interface IApplicationDbContext
 
     DbSet<Appointment> Appointments { get; }
 
+    DbSet<Notification> Notifications { get; }
+
     DbSet<CustomerProfile> CustomerProfiles { get; }
 
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>

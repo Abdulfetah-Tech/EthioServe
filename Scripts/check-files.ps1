@@ -103,7 +103,7 @@ $unexpected = @($actual | Where-Object {
 })
 $empty = @($expected | Where-Object { ($actual -ccontains $_) -and ((Get-Item (Join-Path $app $_)).Length -eq 0) })
 
-$scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1', 'check-backend-files.ps1'
+$scriptNames = 'verify.ps1', 'sync-db-port.ps1', 'check-files.ps1', 'approve-provider.ps1', 'check-backend-files.ps1', 'show-notifications.ps1'
 $scriptsActual = Get-ChildItem (Join-Path $root 'Scripts') -File -Name
 $scriptsMissing = @($scriptNames | Where-Object { $scriptsActual -cnotcontains $_ })
 $scriptsUnexpected = @($scriptsActual | Where-Object { $scriptNames -cnotcontains $_ })

@@ -1,8 +1,10 @@
 using EthioServe.Application.Abstractions;
 using EthioServe.Application.Common;
 using EthioServe.Application.Common.Exceptions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Common;
 using EthioServe.Domain.Entities;
+using EthioServe.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace EthioServe.Application.Appointments;
@@ -11,7 +13,8 @@ public sealed class CustomerAppointmentService(
     IApplicationDbContext db,
     ICurrentUser currentUser,
     IAuditTrail audit,
-    IClock clock) : ICustomerAppointmentService
+    IClock clock,
+    INotifier notifier) : ICustomerAppointmentService
 {
     // The customer comes from the signed-in user's token, never from the request.
     private Guid CustomerId =>
@@ -57,6 +60,7 @@ public sealed class CustomerAppointmentService(
     {
         var customerId = CustomerId;
         var appointment = await FindAsync(id, customerId, ct);
+        var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == appointment.ServiceRequestId, ct);
 
         var before = Snapshot(appointment);
         appointment.Confirm(); // 422 unless it is waiting for the customer
@@ -67,6 +71,10 @@ public sealed class CustomerAppointmentService(
         }
 
         audit.Record("AppointmentConfirmed", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToProviderAsync(
+            appointment.ProviderId, NotificationType.AppointmentUpdated, "The customer confirmed",
+            "The customer confirmed the appointment for \"" + serviceRequest.Title + "\" at " + AppointmentRules.FormatLocal(appointment.StartAt) + ".",
+            "Appointment", appointment.Id, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -83,6 +91,10 @@ public sealed class CustomerAppointmentService(
         serviceRequest.ReturnToAccepted(); // the provider can propose a new time
 
         audit.Record("AppointmentCancelled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await notifier.ToProviderAsync(
+            appointment.ProviderId, NotificationType.AppointmentUpdated, "Appointment cancelled",
+            "The customer cancelled the appointment for \"" + serviceRequest.Title + "\". You can propose a new time.",
+            "ServiceRequest", appointment.ServiceRequestId, ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
