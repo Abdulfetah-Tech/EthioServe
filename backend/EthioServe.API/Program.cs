@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using EthioServe.API.Authorization;
 using EthioServe.API.Configuration;
 using EthioServe.API.Middleware;
+using EthioServe.API.Realtime;
 using EthioServe.API.Services;
 using EthioServe.Application;
 using EthioServe.Application.Abstractions;
@@ -37,6 +38,7 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddRealtime();
 
 builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = context =>
@@ -52,6 +54,7 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
     {
         bearer.MapInboundClaims = false; // keep "sub" and "role" as they are in the token
         bearer.TokenValidationParameters = JwtTokenValidation.CreateParameters(jwt.Value);
+        bearer.Events = RealtimeAuthentication.CreateEvents();
     });
 
 // Authorization: deny by default. Anything without an explicit attribute requires a logged-in user.
@@ -144,6 +147,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapRealtime();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false }).AllowAnonymous();
 

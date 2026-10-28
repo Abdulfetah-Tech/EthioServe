@@ -67,6 +67,16 @@ $batches['7.2'] = @(
     'features\customer\customer-appointment-box.ts', 'features\customer\customer-appointment-box.spec.ts',
     'features\customer\my-appointments.ts'
 )
+$batches['7.4'] = @(
+    'core\models\notification.models.ts', 'core\api\notification.api.ts', 'core\api\notification.api.spec.ts',
+    'core\api\live-connection.ts', 'core\testing\fake-connection.ts',
+    'core\notifications\notification.service.ts', 'core\notifications\notification.service.spec.ts',
+    'shared\notification-format.ts', 'shared\notification-format.spec.ts',
+    'shared\notification-links.ts', 'shared\notification-links.spec.ts',
+    'shared\notification-list-params.ts', 'shared\notification-list-params.spec.ts',
+    'shared\notification-bell.ts', 'shared\notification-bell.spec.ts',
+    'features\notifications\notifications-page.ts'
+)
 $names = @($batches.Keys)
 
 # Without -UpTo, the newest batch that has at least one file is the one being worked on.

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { guestGuard, roleGuard } from './core/guards/auth.guards';
+import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guards';
 import { Roles } from './core/models/auth.models';
 
 // Every page is lazy-loaded. Guards only improve the experience: the API enforces access on every call.
@@ -167,6 +167,12 @@ export const routes: Routes = [
     title: 'Appointments | EthioServe',
     canActivate: [roleGuard(Roles.Customer)],
     loadComponent: () => import('./features/customer/my-appointments').then((m) => m.MyAppointments),
+  },
+  {
+    path: 'notifications',
+    title: 'Notifications | EthioServe',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
   },
   {
     path: 'forbidden',

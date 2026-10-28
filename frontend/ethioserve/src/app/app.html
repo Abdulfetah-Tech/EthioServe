@@ -7,6 +7,7 @@
     <nav aria-label="Main">
       <a routerLink="/providers" routerLinkActive="active">Find providers</a>
       @if (auth.isAuthenticated()) {
+        <app-notification-bell />
         <a [routerLink]="home()" routerLinkActive="active">Dashboard</a>
         <span class="user-name">{{ auth.currentUser()?.displayName }}</span>
         <button type="button" class="btn btn-ghost" (click)="signOut()">Sign out</button>

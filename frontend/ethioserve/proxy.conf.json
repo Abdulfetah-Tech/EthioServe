@@ -3,5 +3,10 @@
     "target": "https://localhost:7080",
     "secure": false,
     "changeOrigin": false
+  },
+  "/hubs": {
+    "target": "https://localhost:7080",
+    "secure": false,
+    "ws": true
   }
 }

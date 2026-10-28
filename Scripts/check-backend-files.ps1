@@ -132,6 +132,16 @@ $batches['7.3'] = @(
     'EthioServe.Tests\Integration\NotificationApiTests.cs'
 )
 
+$batches['7.4'] = @(
+    'EthioServe.Application\Notifications\INotificationPublisher.cs',
+    'EthioServe.API\Realtime\NotificationHub.cs',
+    'EthioServe.API\Realtime\SubUserIdProvider.cs',
+    'EthioServe.API\Realtime\SignalRNotificationPublisher.cs',
+    'EthioServe.API\Realtime\RealtimeExtensions.cs',
+    'EthioServe.API\Realtime\RealtimeAuthentication.cs',
+    'EthioServe.Tests\Integration\RealtimeTests.cs'
+)
+
 $checked = @()
 foreach ($name in $batches.Keys) {
     $paths = $batches[$name]

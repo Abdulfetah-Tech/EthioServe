@@ -2,9 +2,10 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
 import { homeRouteFor } from './core/auth/role-home';
+import { NotificationBell } from './shared/notification-bell';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBell],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

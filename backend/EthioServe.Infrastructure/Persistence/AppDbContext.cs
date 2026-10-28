@@ -1,4 +1,5 @@
 using EthioServe.Application.Abstractions;
+using EthioServe.Application.Notifications;
 using EthioServe.Domain.Common;
 using EthioServe.Domain.Entities;
 using EthioServe.Infrastructure.Identity;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EthioServe.Infrastructure.Persistence;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock clock)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock clock, INotificationPublisher? publisher = null)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
 {
     public DbSet<Region> Regions => Set<Region>();
@@ -57,6 +58,39 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
 
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
     public void DiscardChanges() => ChangeTracker.Clear();
+
+    /// <summary>
+    /// Saves, and then tells the people who are online about the notifications that were just saved. Nothing is pushed
+    /// when the save fails, and a failed push never fails the save.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var added = publisher is null
+            ? new List<Notification>()
+            : ChangeTracker.Entries<Notification>().Where(e => e.State == EntityState.Added).Select(e => e.Entity).ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        if (publisher is not null && added.Count > 0)
+        {
+#pragma warning disable CA1031 // the push is best effort; the publisher logs its own failures
+            try
+            {
+                await publisher.PublishAsync(
+                    added.Select(n => new NotificationPush(
+                        n.UserId,
+                        new NotificationDto(n.Id, n.Type, n.Title, n.Message, n.IsRead, n.RelatedEntityType, n.RelatedEntityId, n.CreatedAt))).ToList(),
+                    CancellationToken.None);
+            }
+            catch (Exception)
+            {
+                // The notification is saved. The person sees it the next time the app refreshes.
+            }
+#pragma warning restore CA1031
+        }
+
+        return result;
+    }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
