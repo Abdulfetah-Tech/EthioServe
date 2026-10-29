@@ -1,3 +1,5 @@
+using System;
+
 namespace EthioServe.Domain.Common;
 
 /// <summary>Guid-keyed entity with a creation timestamp (stamped by the DbContext, never by callers).</summary>
@@ -12,7 +14,9 @@ public abstract class BaseEntity : ICreationAudited
     {
         if (CreatedAt == default)
         {
-            CreatedAt = utcNow;
+            // Truncate to milliseconds to avoid precision differences between DB and SignalR payloads
+            var ticks = utcNow.Ticks - (utcNow.Ticks % TimeSpan.TicksPerMillisecond);
+            CreatedAt = new DateTimeOffset(ticks, utcNow.Offset);
         }
     }
 }

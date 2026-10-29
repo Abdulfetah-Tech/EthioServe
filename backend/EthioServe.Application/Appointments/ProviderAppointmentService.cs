@@ -61,7 +61,18 @@ public sealed class ProviderAppointmentService(
             serviceRequest.CustomerId, NotificationType.AppointmentUpdated, "A time was proposed",
             "A time was proposed for \"" + serviceRequest.Title + "\": " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
             "ServiceRequest", serviceRequest.Id, ct);
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
+        }
 
         return await GetAsync(appointment.Id, ct);
     }
@@ -132,7 +143,18 @@ public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleApp
             appointment.CustomerId, NotificationType.AppointmentUpdated, "The time was changed",
             "The time for \"" + serviceRequest.Title + "\" was changed to " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
             "ServiceRequest", serviceRequest.Id, ct);
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
+        }
 
         return await GetAsync(id, ct);
     }
