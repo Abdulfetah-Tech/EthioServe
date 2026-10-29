@@ -250,8 +250,8 @@ serviceRequest.Complete(clock.UtcNow);
 
         if (clash is not null)
         {
-            throw new ConflictException(
-                $"You already have an appointment from {AppointmentRules.FormatLocal(clash.StartAt)} to {AppointmentRules.FormatLocal(clash.EndAt)} (Addis Ababa time). Choose a time that does not overlap.");
+            // Overlap will be prevented by DB constraint; allow DB to raise conflict.
+            throw new ConflictException("You already have an appointment at that time.");
         }
     }
 
