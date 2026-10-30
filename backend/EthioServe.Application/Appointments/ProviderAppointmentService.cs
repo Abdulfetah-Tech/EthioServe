@@ -24,57 +24,18 @@ public sealed class ProviderAppointmentService(
     private Guid ProviderId =>
         currentUser.ProviderId ?? throw new ForbiddenException("This account has no provider profile.");
 
+    // Everything that books or moves time for one provider takes this lock first.
+    private static string LockKey(Guid providerId) => $"provider-schedule:{providerId:N}";
+
     public async Task<ProviderAppointmentDto> ScheduleAsync(Guid requestId, ScheduleAppointmentRequest request, CancellationToken ct = default)
     {
         var providerId = ProviderId;
         await scheduleValidator.ValidateAndThrowAsync(request, ct);
 
-        // Matched on the request, the accepted quote AND this provider: a job that is not yours is simply "not found".
-        var quote = await db.Quotes.AsNoTracking().FirstOrDefaultAsync(
-                        q => q.ServiceRequestId == requestId && q.ProviderId == providerId && q.Status == QuoteStatus.Accepted, ct)
-                    ?? throw new NotFoundException("Request not found.");
+        // Bookings for one provider run one at a time, so two requests for overlapping times can never race each other.
+        var id = await db.WithExclusiveLockAsync(LockKey(providerId), () => ScheduleCoreAsync(providerId, requestId, request, ct), ct);
 
-        var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == requestId, ct);
-
-        if (serviceRequest.Status != ServiceRequestStatus.Accepted)
-        {
-            throw new DomainException("This job already has an appointment, or is no longer waiting for one.");
-        }
-
-        var start = AppointmentRules.Normalize(request.StartAt);
-
-        if (AppointmentRules.StartProblem(start, clock.UtcNow) is { } problem)
-        {
-            throw Invalid(problem);
-        }
-
-        var end = AppointmentRules.EndFor(start, quote.EstimatedDurationMinutes);
-        await EnsureFreeAsync(providerId, start, end, Guid.Empty, ct);
-
-        var appointment = new Appointment(
-            requestId, quote.Id, providerId, serviceRequest.CustomerId, start, end, serviceRequest.Address, Clean(request.Notes));
-
-        serviceRequest.MarkScheduled();
-        db.Appointments.Add(appointment);
-        audit.Record("AppointmentScheduled", nameof(Appointment), appointment.Id, null, Snapshot(appointment));
-        await notifier.ToCustomerAsync(
-            serviceRequest.CustomerId, NotificationType.AppointmentUpdated, "A time was proposed",
-            "A time was proposed for \"" + serviceRequest.Title + "\": " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
-            "ServiceRequest", serviceRequest.Id, ct);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
-        }
-        catch (DbUpdateException)
-        {
-            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
-        }
-
-        return await GetAsync(appointment.Id, ct);
+        return await GetAsync(id, ct);
     }
 
     public async Task<PagedResult<ProviderAppointmentDto>> ListAsync(AppointmentQuery query, CancellationToken ct = default)
@@ -113,48 +74,12 @@ public sealed class ProviderAppointmentService(
         return ToDto(row);
     }
 
-public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleAppointmentRequest request, CancellationToken ct = default)
+    public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleAppointmentRequest request, CancellationToken ct = default)
     {
         var providerId = ProviderId;
         await rescheduleValidator.ValidateAndThrowAsync(request, ct);
 
-        var appointment = await FindAsync(id, providerId, ct);
-        var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == appointment.ServiceRequestId, ct);
-        var start = AppointmentRules.Normalize(request.StartAt);
-
-        if (AppointmentRules.StartProblem(start, clock.UtcNow) is { } problem)
-        {
-            throw Invalid(problem);
-        }
-
-        var minutes = await db.Quotes.AsNoTracking()
-            .Where(q => q.Id == appointment.QuoteId)
-            .Select(q => q.EstimatedDurationMinutes)
-            .FirstAsync(ct);
-
-        var before = Snapshot(appointment);
-        var end = AppointmentRules.EndFor(start, minutes);
-
-        appointment.Reschedule(start, end, Clean(request.Notes)); // 422 unless it is Scheduled or Confirmed
-        await EnsureFreeAsync(providerId, start, end, id, ct);
-
-        audit.Record("AppointmentRescheduled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
-        await notifier.ToCustomerAsync(
-            appointment.CustomerId, NotificationType.AppointmentUpdated, "The time was changed",
-            "The time for \"" + serviceRequest.Title + "\" was changed to " + AppointmentRules.FormatLocal(appointment.StartAt) + " to " + AppointmentRules.FormatLocal(appointment.EndAt) + " (Addis Ababa time).",
-            "ServiceRequest", serviceRequest.Id, ct);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
-        }
-        catch (DbUpdateException)
-        {
-            throw new ConflictException("That time was just taken by another appointment. Please choose a different time.");
-        }
+        await db.WithExclusiveLockAsync(LockKey(providerId), () => RescheduleCoreAsync(providerId, id, request, ct), ct);
 
         return await GetAsync(id, ct);
     }
@@ -165,15 +90,14 @@ public async Task<ProviderAppointmentDto> RescheduleAsync(Guid id, RescheduleApp
         var appointment = await FindAsync(id, providerId, ct);
         var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == appointment.ServiceRequestId, ct);
 
-var before = Snapshot(appointment);
-        appointment.Cancel();            // 422 unless it is Scheduled or Confirmed
+        var before = Snapshot(appointment);
+        appointment.Cancel();              // 422 unless it is Scheduled or Confirmed
         serviceRequest.ReturnToAccepted(); // the job waits for a new time
 
         audit.Record("AppointmentCancelled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
-        await notifier.ToCustomerAsync(
-            appointment.CustomerId, NotificationType.AppointmentUpdated, "Appointment cancelled",
-            "The provider cancelled the appointment for \"" + serviceRequest.Title + "\". You can accept another quote and choose a new time.",
-            "ServiceRequest", appointment.ServiceRequestId, ct);
+        await NotifyCustomerAsync(
+            appointment, "Appointment cancelled",
+            "The provider cancelled the appointment for \"{job}\". They can propose a new time.", ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -194,13 +118,10 @@ var before = Snapshot(appointment);
                 $"You can start the job up to 2 hours before the agreed time ({AppointmentRules.FormatLocal(appointment.StartAt)}, Addis Ababa time).");
         }
 
-serviceRequest.StartWork();
+        serviceRequest.StartWork();
 
         audit.Record("AppointmentStarted", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
-        await notifier.ToCustomerAsync(
-            appointment.CustomerId, NotificationType.AppointmentUpdated, "The job has started",
-            "The provider started the job for \"" + serviceRequest.Title + "\". Keep your phone nearby.",
-            "ServiceRequest", appointment.ServiceRequestId, ct);
+        await NotifyCustomerAsync(appointment, "The job has started", "The provider started work on \"{job}\".", ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -214,16 +135,94 @@ serviceRequest.StartWork();
 
         var before = Snapshot(appointment);
         appointment.Complete(); // 422 unless the job is in progress
-serviceRequest.Complete(clock.UtcNow);
+        serviceRequest.Complete(clock.UtcNow);
 
         audit.Record("AppointmentCompleted", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
-        await notifier.ToCustomerAsync(
-            appointment.CustomerId, NotificationType.AppointmentUpdated, "The job is complete",
-            "The provider marked the job for \"" + serviceRequest.Title + "\" as complete. Please leave a review.",
-            "ServiceRequest", appointment.ServiceRequestId, ct);
+        await NotifyCustomerAsync(appointment, "The job is complete", "The provider marked \"{job}\" as complete.", ct);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
+    }
+
+    private async Task<Guid> ScheduleCoreAsync(Guid providerId, Guid requestId, ScheduleAppointmentRequest request, CancellationToken ct)
+    {
+        // Matched on the request, the accepted quote AND this provider: a job that is not yours is simply "not found".
+        var quote = await db.Quotes.AsNoTracking().FirstOrDefaultAsync(
+                        q => q.ServiceRequestId == requestId && q.ProviderId == providerId && q.Status == QuoteStatus.Accepted, ct)
+                    ?? throw new NotFoundException("Request not found.");
+
+        var serviceRequest = await db.ServiceRequests.FirstAsync(r => r.Id == requestId, ct);
+
+        if (serviceRequest.Status != ServiceRequestStatus.Accepted)
+        {
+            throw new DomainException("This job already has an appointment, or is no longer waiting for one.");
+        }
+
+        var start = AppointmentRules.Normalize(request.StartAt);
+
+        if (AppointmentRules.StartProblem(start, clock.UtcNow) is { } problem)
+        {
+            throw Invalid(problem);
+        }
+
+        var end = AppointmentRules.EndFor(start, quote.EstimatedDurationMinutes);
+        await EnsureFreeAsync(providerId, start, end, Guid.Empty, ct);
+
+        var appointment = new Appointment(
+            requestId, quote.Id, providerId, serviceRequest.CustomerId, start, end, serviceRequest.Address, Clean(request.Notes));
+
+        serviceRequest.MarkScheduled();
+        db.Appointments.Add(appointment);
+        audit.Record("AppointmentScheduled", nameof(Appointment), appointment.Id, null, Snapshot(appointment));
+        await NotifyCustomerAsync(
+            appointment, "A time was proposed",
+            "The provider proposed " + AppointmentRules.FormatLocal(appointment.StartAt) + " (Addis Ababa time) for \"{job}\". Please confirm it.", ct);
+        await db.SaveChangesAsync(ct);
+
+        return appointment.Id;
+    }
+
+    private async Task<Guid> RescheduleCoreAsync(Guid providerId, Guid id, RescheduleAppointmentRequest request, CancellationToken ct)
+    {
+        var appointment = await FindAsync(id, providerId, ct);
+        var start = AppointmentRules.Normalize(request.StartAt);
+
+        if (AppointmentRules.StartProblem(start, clock.UtcNow) is { } problem)
+        {
+            throw Invalid(problem);
+        }
+
+        var minutes = await db.Quotes.AsNoTracking()
+            .Where(q => q.Id == appointment.QuoteId)
+            .Select(q => q.EstimatedDurationMinutes)
+            .FirstAsync(ct);
+
+        var before = Snapshot(appointment);
+        var end = AppointmentRules.EndFor(start, minutes);
+
+        appointment.Reschedule(start, end, Clean(request.Notes)); // 422 unless it is Scheduled or Confirmed
+        await EnsureFreeAsync(providerId, start, end, id, ct);
+
+        audit.Record("AppointmentRescheduled", nameof(Appointment), appointment.Id, before, Snapshot(appointment));
+        await NotifyCustomerAsync(
+            appointment, "The time was changed",
+            "The provider moved \"{job}\" to " + AppointmentRules.FormatLocal(appointment.StartAt) + " (Addis Ababa time). Please confirm the new time.", ct);
+        await db.SaveChangesAsync(ct);
+
+        return appointment.Id;
+    }
+
+    // Tells the customer about a change. It is saved together with the change itself.
+    private async Task NotifyCustomerAsync(Appointment appointment, string title, string message, CancellationToken ct)
+    {
+        var requestTitle = await db.ServiceRequests.AsNoTracking()
+            .Where(r => r.Id == appointment.ServiceRequestId)
+            .Select(r => r.Title)
+            .FirstAsync(ct);
+
+        await notifier.ToCustomerAsync(
+            appointment.CustomerId, NotificationType.AppointmentUpdated, title,
+            message.Replace("{job}", requestTitle), "ServiceRequest", appointment.ServiceRequestId, ct);
     }
 
     private async Task<Appointment> FindAsync(Guid id, Guid providerId, CancellationToken ct) =>
@@ -231,8 +230,8 @@ serviceRequest.Complete(clock.UtcNow);
         ?? throw new NotFoundException("Appointment not found.");
 
     /// <summary>
-    /// The friendly check. The database enforces the same rule, so two requests arriving at the same moment cannot
-    /// both succeed even though both pass this check.
+    /// The friendly check. Bookings for one provider are serialized by the lock, so this always sees the latest committed
+    /// appointments. The database constraint is a last safety net behind it.
     /// </summary>
     private async Task EnsureFreeAsync(Guid providerId, DateTimeOffset start, DateTimeOffset end, Guid exceptId, CancellationToken ct)
     {
@@ -250,8 +249,8 @@ serviceRequest.Complete(clock.UtcNow);
 
         if (clash is not null)
         {
-            // Overlap will be prevented by DB constraint; allow DB to raise conflict.
-            throw new ConflictException("You already have an appointment at that time.");
+            throw new ConflictException(
+                $"You already have an appointment from {AppointmentRules.FormatLocal(clash.StartAt)} to {AppointmentRules.FormatLocal(clash.EndAt)} (Addis Ababa time). Choose a time that does not overlap.");
         }
     }
 

@@ -57,6 +57,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     }
 
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
+    /// <summary>
+    /// Runs the operation in one transaction after taking a PostgreSQL advisory lock for the key. Anyone else asking for
+    /// the same key waits until this transaction ends, and then sees what it saved.
+    /// </summary>
+    public async Task<T> WithExclusiveLockAsync<T>(string key, Func<Task<T>> operation, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+
+        await Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
+
+        var result = await operation();
+        await transaction.CommitAsync(cancellationToken);
+
+        return result;
+    }
+
     public void DiscardChanges() => ChangeTracker.Clear();
 
     /// <summary>

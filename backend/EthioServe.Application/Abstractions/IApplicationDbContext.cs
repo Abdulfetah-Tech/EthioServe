@@ -37,6 +37,12 @@ public interface IApplicationDbContext
 
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
     void DiscardChanges();
+
+    /// <summary>
+    /// Runs the operation in one database transaction after taking a lock for the key. Operations that use the same
+    /// key run one at a time, so they cannot race each other. The lock is released when the transaction ends.
+    /// </summary>
+    Task<T> WithExclusiveLockAsync<T>(string key, Func<Task<T>> operation, CancellationToken cancellationToken = default);
     DbSet<AuditLog> AuditLogs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
