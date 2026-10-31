@@ -45,4 +45,22 @@ public sealed class ProviderDocument : BaseEntity
     public DateTimeOffset? ReviewedAt { get; private set; }
 
     public string? RejectionReason { get; private set; }
+
+    public void Review(DocumentStatus status, string? rejectionReason, Guid? reviewedBy, DateTimeOffset reviewedAt)
+    {
+        if (Status != DocumentStatus.Pending)
+        {
+            throw new DomainException($"A document that is {Status} cannot be reviewed again.");
+        }
+
+        if (status == DocumentStatus.Rejected && string.IsNullOrWhiteSpace(rejectionReason))
+        {
+            throw new DomainException("A rejection reason is required.");
+        }
+
+        Status = status;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = reviewedAt;
+        RejectionReason = status == DocumentStatus.Rejected ? rejectionReason?.Trim() : null;
+    }
 }

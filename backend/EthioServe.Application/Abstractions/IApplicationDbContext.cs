@@ -41,6 +41,10 @@ public interface IApplicationDbContext
 
     DbSet<CustomerProfile> CustomerProfiles { get; }
 
+    DbSet<Payment> Payments { get; }
+
+    DbSet<ProviderDocument> ProviderDocuments { get; }
+
     /// <summary>Forgets every tracked change, so an operation can start again from what is stored.</summary>
     void DiscardChanges();
 

@@ -1,9 +1,11 @@
 using EthioServe.Application.Auth;
 using EthioServe.Application.Catalog;
 using EthioServe.Application.Common;
+using EthioServe.Application.Favorites;
 using EthioServe.Application.Locations;
-using FluentValidation;
-using Microsoft.Extensions.DependencyInjection;
+using EthioServe.Application.Messages;
+using EthioServe.Application.Payments;
+using EthioServe.Application.ProviderDocuments;
 using EthioServe.Application.Providers;
 using EthioServe.Application.Appointments;
 using EthioServe.Application.Attachments;
@@ -11,6 +13,8 @@ using EthioServe.Application.Notifications;
 using EthioServe.Application.Quotes;
 using EthioServe.Application.Requests;
 using EthioServe.Application.Reviews;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EthioServe.Application;
 
@@ -34,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<IProviderAppointmentService, ProviderAppointmentService>();
         services.AddScoped<ICustomerAppointmentService, CustomerAppointmentService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IMessageService, MessageService>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IProviderDocumentService, ProviderDocumentService>();
         services.AddScoped<INotifier, Notifier>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditTrail, AuditTrail>();
