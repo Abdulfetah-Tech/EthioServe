@@ -292,6 +292,38 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                     b.ToTable("customer_profiles", (string)null);
                 });
 
+            modelBuilder.Entity("EthioServe.Domain.Entities.FavoriteProvider", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<Guid>("ProviderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("provider_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_favorite_providers");
+
+                    b.HasIndex("ProviderId")
+                        .HasDatabaseName("ix_favorite_providers_provider_id");
+
+                    b.HasIndex("CustomerId", "ProviderId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_favorite_providers_customer_provider");
+
+                    b.ToTable("favorite_providers", (string)null);
+                });
+
             modelBuilder.Entity("EthioServe.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -347,7 +379,7 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
 
                     b.ToTable("notifications", null, t =>
                         {
-                            t.HasCheckConstraint("ck_notifications_type", "type IN ('General', 'NewServiceRequest', 'QuoteReceived', 'QuoteAccepted', 'AppointmentUpdated', 'PaymentCompleted', 'ReviewReceived', 'ProviderVerified')");
+                            t.HasCheckConstraint("ck_notifications_type", "type IN ('General', 'NewServiceRequest', 'QuoteReceived', 'QuoteAccepted', 'AppointmentUpdated', 'PaymentCompleted', 'ReviewReceived', 'ProviderVerified', 'NewMessage')");
                         });
                 });
 
@@ -1004,6 +1036,51 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("EthioServe.Domain.Entities.RequestMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ProviderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("provider_id");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sender_user_id");
+
+                    b.Property<Guid>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_request_messages");
+
+                    b.HasIndex("ProviderId")
+                        .HasDatabaseName("ix_request_messages_provider_id");
+
+                    b.HasIndex("SenderUserId")
+                        .HasDatabaseName("ix_request_messages_sender_user_id");
+
+                    b.HasIndex("ServiceRequestId", "ProviderId", "CreatedAt")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("ix_request_messages_request_provider_created");
+
+                    b.ToTable("request_messages", (string)null);
+                });
+
             modelBuilder.Entity("EthioServe.Domain.Entities.Review", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1643,6 +1720,23 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_customer_profiles_users_user_id");
                 });
 
+            modelBuilder.Entity("EthioServe.Domain.Entities.FavoriteProvider", b =>
+                {
+                    b.HasOne("EthioServe.Domain.Entities.CustomerProfile", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_favorite_providers_customer_profiles_customer_id");
+
+                    b.HasOne("EthioServe.Domain.Entities.ProviderProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_favorite_providers_provider_profiles_provider_id");
+                });
+
             modelBuilder.Entity("EthioServe.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("EthioServe.Infrastructure.Identity.ApplicationUser", null)
@@ -1792,6 +1886,30 @@ namespace EthioServe.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_request_attachments_service_requests_service_request_id");
+                });
+
+            modelBuilder.Entity("EthioServe.Domain.Entities.RequestMessage", b =>
+                {
+                    b.HasOne("EthioServe.Domain.Entities.ProviderProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_messages_provider_profiles_provider_id");
+
+                    b.HasOne("EthioServe.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_messages_users_sender_user_id");
+
+                    b.HasOne("EthioServe.Domain.Entities.ServiceRequest", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_messages_service_requests_service_request_id");
                 });
 
             modelBuilder.Entity("EthioServe.Domain.Entities.Review", b =>

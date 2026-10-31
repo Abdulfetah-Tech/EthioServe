@@ -7,6 +7,7 @@ $batches = [ordered]@{
     '4.4a' = @(
         'core\models\marketplace.models.ts', 'core\api\load-state.ts', 'core\api\load-state.spec.ts',
         'core\api\marketplace.api.ts', 'core\api\marketplace.api.spec.ts',
+        'core\api\review.api.ts',
         'features\marketplace\home.ts', 'features\marketplace\provider-card.ts', 'features\marketplace\providers.ts',
         'features\marketplace\provider-detail.ts', 'features\marketplace\search-params.ts',
         'features\marketplace\search-params.spec.ts',
