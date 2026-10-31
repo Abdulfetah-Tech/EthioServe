@@ -30,7 +30,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-ethioserve};Username=${POSTGRES_USER:-ethioserve};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+      Database__ApplyMigrationsOnStartup: "true"
       Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-4200}
+      App__FrontendBaseUrl: http://localhost:${FRONTEND_PORT:-4200}
     ports:
       - "127.0.0.1:${API_PORT:-5102}:8080"
     volumes:

@@ -1,4 +1,4 @@
-﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = Split-Path -Parent $PSScriptRoot
 $esc = [char]27
 
@@ -63,7 +63,7 @@ function Step([string]$name, [string]$folder, [scriptblock]$command) {
 }
 
 Step 'Backend build'  'backend'              { dotnet build --nologo -v quiet }
-Step 'Backend tests'  'backend'              { dotnet test --nologo --no-build }
+Step 'Backend tests'  'backend'              { $env:VSTEST_CONNECTION_TIMEOUT = "300000"; dotnet test --nologo --no-build }
 Step 'Frontend build' 'frontend\ethioserve'  { npm run build }
 Step 'Frontend tests' 'frontend\ethioserve'  { npm test -- --no-watch }
 

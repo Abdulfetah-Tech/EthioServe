@@ -10,6 +10,7 @@ using EthioServe.Application.Attachments;
 using EthioServe.Application.Notifications;
 using EthioServe.Application.Quotes;
 using EthioServe.Application.Requests;
+using EthioServe.Application.Reviews;
 
 namespace EthioServe.Application;
 
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerQuoteService, CustomerQuoteService>();
         services.AddScoped<IProviderAppointmentService, ProviderAppointmentService>();
         services.AddScoped<ICustomerAppointmentService, CustomerAppointmentService>();
+        services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<INotifier, Notifier>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditTrail, AuditTrail>();

@@ -1,0 +1,43 @@
+# Deployment guide
+
+## Local container stack
+
+1. Copy `.env.example` to `.env`.
+2. Set a unique `POSTGRES_PASSWORD` and a unique `JWT_SIGNING_KEY` of at least 32 characters. Do not use either example value in a shared or production environment.
+3. Start the stack:
+
+   ```powershell
+   docker compose up --build
+   ```
+
+4. Open `http://localhost:4200`. The frontend proxies `/api` and `/hubs` to the private API container. Health endpoints are available at `http://localhost:5102/health` and `http://localhost:5102/health/live`.
+
+The Compose stack sets `Database__ApplyMigrationsOnStartup=true`. This is suitable for its one API container: it applies EF migrations and idempotently adds required roles, Ethiopian locations and catalog records. It does not create a production administrator or demo users.
+
+## AWS target architecture
+
+- **Frontend:** static Angular assets in S3 + CloudFront, or a containerized frontend service when same-origin reverse proxying is required.
+- **API:** ECS Fargate service behind an Application Load Balancer. Run at least two tasks across availability zones after the database is initialized.
+- **Database:** Amazon RDS for PostgreSQL with Multi-AZ enabled where the service-level objective requires it. Keep the database private; allow ingress only from the API security group.
+- **Images:** build in CI and push immutable image tags to Amazon ECR.
+- **Secrets:** place the connection string and `Jwt__SigningKey` in AWS Secrets Manager; inject them into ECS task definitions. Never put them in images, task-definition source, GitHub variables or `.env` files.
+- **TLS and DNS:** terminate TLS at the ALB using ACM. Forward `X-Forwarded-Proto` and configure the API task to trust only the ALB or service network proxy.
+- **Logs and alerts:** ship container stdout to CloudWatch Logs; alarm on ALB 5xx, unhealthy targets, ECS task restarts, RDS storage/connection pressure and authentication-rate-limit spikes.
+
+## Database migration procedure
+
+Do not enable `Database__ApplyMigrationsOnStartup` on a scaled ECS API service. Before a new API release:
+
+1. Run exactly one ECS one-off task using the new image with `Database__ApplyMigrationsOnStartup=true` and the same RDS secret.
+2. Wait for it to finish successfully and record the deployment revision.
+3. Run the API service with `Database__ApplyMigrationsOnStartup=false`.
+4. Roll forward with compatible, additive migrations first. Plan a separate release and backup for destructive changes.
+
+Take automated RDS backups and test restore procedures before storing real customer data. Use UTC in storage; render user-facing appointment times as `Africa/Addis_Ababa` in the client.
+
+## CI/CD minimum gates
+
+- Restore, build and test the backend with Docker available for Testcontainers.
+- Run `npm ci`, production build and unit tests for the frontend.
+- Build both container images and validate `docker compose config` with injected non-production test values.
+- Scan dependencies and images, then deploy an immutable ECR tag only after the above checks pass.

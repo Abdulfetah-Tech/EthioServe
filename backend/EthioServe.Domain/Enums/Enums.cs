@@ -27,5 +27,6 @@ public enum NotificationType
     AppointmentUpdated,
     PaymentCompleted,
     ReviewReceived,
-    ProviderVerified
+    ProviderVerified,
+    NewMessage
 }

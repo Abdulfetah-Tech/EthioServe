@@ -1,9 +1,11 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { LOADING, toLoadState } from '../../core/api/load-state';
 import { MarketplaceApi } from '../../core/api/marketplace.api';
+import { ReviewApi } from '../../core/api/review.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { PublicOffer, PublicProvider } from '../../core/models/marketplace.models';
 import { EtbPipe } from '../../shared/etb.pipe';
@@ -11,7 +13,7 @@ import { Rating } from '../../shared/rating';
 
 @Component({
   selector: 'app-provider-detail',
-  imports: [RouterLink, Rating, EtbPipe],
+  imports: [DatePipe, RouterLink, Rating, EtbPipe],
   template: `
     @let s = state();
     @if (s.kind === 'loading') {
@@ -66,6 +68,34 @@ import { Rating } from '../../shared/rating';
           }
         </section>
 
+        <section class="card" aria-labelledby="reviews-heading">
+          <h2 id="reviews-heading">Customer reviews</h2>
+          @let reviewState = reviews();
+          @if (reviewState.kind === 'ready') {
+            @if (reviewState.data.items.length) {
+              <ul class="offer-list" role="list">
+                @for (review of reviewState.data.items; track review.id) {
+                  <li>
+                    <span>
+                      <strong>{{ review.rating }} out of 5</strong>
+                      @if (review.comment) {
+                        <span> &middot; {{ review.comment }}</span>
+                      }
+                    </span>
+                    <time class="muted" [attr.datetime]="review.createdAt">{{ review.createdAt | date: 'mediumDate' }}</time>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted">No customer reviews yet.</p>
+            }
+          } @else if (reviewState.kind === 'error') {
+            <p class="alert alert-error" role="alert">{{ reviewState.message }}</p>
+          } @else {
+            <p class="muted" role="status">Loading reviews...</p>
+          }
+        </section>
+
         <section class="card">
           <h2>Hire {{ s.data.businessName }}</h2>
           <p class="muted">
@@ -84,6 +114,7 @@ import { Rating } from '../../shared/rating';
 })
 export class ProviderDetail {
   private readonly api = inject(MarketplaceApi);
+  private readonly reviewApi = inject(ReviewApi);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly auth = inject(AuthService);
@@ -93,6 +124,15 @@ export class ProviderDetail {
       map((params) => params.get('id') ?? ''),
       distinctUntilChanged(),
       switchMap((id) => toLoadState(this.api.provider(id))),
+    ),
+    { initialValue: LOADING },
+  );
+
+  protected readonly reviews = toSignal(
+    this.route.paramMap.pipe(
+      map((params) => params.get('id') ?? ''),
+      distinctUntilChanged(),
+      switchMap((id) => toLoadState(this.reviewApi.list(id))),
     ),
     { initialValue: LOADING },
   );

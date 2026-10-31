@@ -42,6 +42,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
 
     public DbSet<Review> Reviews => Set<Review>();
 
+    public DbSet<FavoriteProvider> FavoriteProviders => Set<FavoriteProvider>();
+
+    public DbSet<RequestMessage> RequestMessages => Set<RequestMessage>();
+
     public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

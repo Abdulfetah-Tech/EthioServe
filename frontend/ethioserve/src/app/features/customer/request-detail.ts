@@ -7,6 +7,8 @@ import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { toApiError } from '../../core/api/api-error';
 import { LOADING, LoadState, toLoadState } from '../../core/api/load-state';
 import { RequestApi } from '../../core/api/request.api';
+import { ReviewApi } from '../../core/api/review.api';
+import { ProviderReview } from '../../core/models/marketplace.models';
 import { RequestDetail } from '../../core/models/request.models';
 import { RequestPhotos } from '../../shared/request-photos';
 import { hasAppointmentSection } from '../../shared/appointment-format';
@@ -78,6 +80,33 @@ import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel,
           </section>
         }
 
+        @if (s.data.status === 'Completed') {
+          <section class="card" aria-labelledby="review-heading">
+            <h2 id="review-heading">Rate this completed service</h2>
+            @if (submittedReview(); as review) {
+              <p class="alert alert-success" role="status">Thank you for your {{ review.rating }} out of 5 review.</p>
+            } @else {
+              <p class="muted">Your feedback helps other customers choose trusted professionals.</p>
+              <div class="field">
+                <label for="review-rating">Rating</label>
+                <select id="review-rating" [formControl]="rating">
+                  @for (value of ratingValues; track value) {
+                    <option [ngValue]="value">{{ value }} out of 5</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="review-comment">Comment (optional)</label>
+                <textarea id="review-comment" rows="4" maxlength="2000" [formControl]="comment"></textarea>
+                <p class="hint">Up to 2,000 characters. Do not include phone numbers, addresses, or other private details.</p>
+              </div>
+              <button type="button" class="btn btn-primary" [disabled]="busy() || rating.invalid || comment.invalid" (click)="submitReview(s.data)">
+                Submit review
+              </button>
+            }
+          </section>
+        }
+
         <section class="card" aria-labelledby="photos-heading">
           <h2 id="photos-heading">Photos</h2>
           <app-request-photos [requestId]="s.data.id" [editable]="canEdit(s.data.status)" />
@@ -122,6 +151,7 @@ import { budgetText, canCancel, canEdit, nextStepText, statusBadge, statusLabel,
 })
 export class RequestDetailPage {
   private readonly api = inject(RequestApi);
+  private readonly reviews = inject(ReviewApi);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly label = statusLabel;
@@ -138,8 +168,12 @@ export class RequestDetailPage {
   protected readonly busy = signal(false);
   protected readonly notice = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly submittedReview = signal<ProviderReview | null>(null);
 
   protected readonly reason = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] });
+  protected readonly rating = new FormControl(5, { nonNullable: true, validators: [Validators.min(1), Validators.max(5)] });
+  protected readonly comment = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] });
+  protected readonly ratingValues = [5, 4, 3, 2, 1];
 
   constructor() {
     this.route.paramMap
@@ -149,7 +183,10 @@ export class RequestDetailPage {
         switchMap((id) => toLoadState(this.api.get(id))),
         takeUntilDestroyed(),
       )
-      .subscribe((state) => this.detail.set(state));
+      .subscribe((state) => {
+        this.detail.set(state);
+        this.submittedReview.set(null);
+      });
   }
 
   protected reload(id: string): void {
@@ -176,6 +213,30 @@ export class RequestDetailPage {
         this.detail.set({ kind: 'ready', data: updated });
         this.cancelling.set(false);
         this.notice.set('Your request has been cancelled.');
+        this.busy.set(false);
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(toApiError(error).message);
+        this.busy.set(false);
+      },
+    });
+  }
+
+  protected submitReview(request: RequestDetail): void {
+    if (this.rating.invalid || this.comment.invalid) {
+      return;
+    }
+
+    this.busy.set(true);
+    this.errorMessage.set(null);
+
+    this.reviews.create(request.id, {
+      rating: this.rating.value,
+      comment: this.comment.value.trim() || null,
+    }).subscribe({
+      next: (review) => {
+        this.submittedReview.set(review);
+        this.notice.set('Your review has been published.');
         this.busy.set(false);
       },
       error: (error: unknown) => {

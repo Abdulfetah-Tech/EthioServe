@@ -31,6 +31,12 @@ public interface IApplicationDbContext
 
     DbSet<Appointment> Appointments { get; }
 
+    DbSet<Review> Reviews { get; }
+
+    DbSet<FavoriteProvider> FavoriteProviders { get; }
+
+    DbSet<RequestMessage> RequestMessages { get; }
+
     DbSet<Notification> Notifications { get; }
 
     DbSet<CustomerProfile> CustomerProfiles { get; }

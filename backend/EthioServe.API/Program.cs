@@ -133,10 +133,19 @@ else
 {
     app.UseHsts();
 }
+// Local development and the single-instance Compose stack opt in to schema initialization.
+// Production deployments with more than one API replica must run this once as a dedicated migration task.
+var applyMigrationsOnStartup = app.Environment.IsDevelopment()
+    || builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
+
+if (applyMigrationsOnStartup)
+{
+    // The reference seeder is idempotent; it only adds missing roles, locations and catalog records.
+    await app.Services.InitializeDatabaseAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
-    // Development convenience: apply migrations and seed reference data. Production uses an explicit migration step.
-    await app.Services.InitializeDatabaseAsync();
     await AdminBootstrapper.EnsureAdminAsync(app.Services, app.Configuration);
     await DemoDataSeeder.SeedAsync(app.Services, app.Configuration);
 }

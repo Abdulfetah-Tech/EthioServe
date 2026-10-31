@@ -60,6 +60,14 @@ export interface PublicProvider {
   services: PublicOffer[];
 }
 
+/** A public review never includes the customer identity or request details. */
+export interface ProviderReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
 export interface Region {
   id: number;
   name: string;
