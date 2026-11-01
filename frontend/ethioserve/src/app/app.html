@@ -4,7 +4,13 @@
   <div class="container header-inner">
     <a routerLink="/" class="brand" aria-label="EthioServe home">EthioServe</a>
 
-    <nav aria-label="Main">
+    <button type="button" class="nav-toggle" (click)="toggleNav()" aria-label="Open menu" [attr.aria-expanded]="openNav()">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+
+    <nav [class.nav-open]="openNav()" aria-label="Main">
       <a routerLink="/providers" routerLinkActive="active">Find providers</a>
       @if (auth.isAuthenticated()) {
         <app-notification-bell />

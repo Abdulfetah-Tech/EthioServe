@@ -73,6 +73,79 @@ main { flex: 1; padding-top: 2rem; padding-bottom: 2rem; }
 
 .site-footer { padding-top: 1rem; padding-bottom: 1.5rem; color: var(--color-muted); }
 
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+.nav-toggle-bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--color-text);
+  margin: 4px 0;
+}
+.nav-toggle:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.site-header .header-inner {
+  flex-wrap: wrap;
+}
+
+.site-header nav {
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav-open {
+  position: fixed;
+  inset: 0;
+  background: var(--color-surface);
+  z-index: 900;
+  padding: 1rem;
+  overflow-y: auto;
+}
+.nav-open nav {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+.nav-open .btn {
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .nav-toggle { display: none; }
+  .nav-open { position: static; background: transparent; padding: 0; overflow: visible; }
+  .nav-open nav { flex-direction: row; align-items: center; gap: 1rem; }
+  .nav-open .btn { width: auto; text-align: left; }
+}
+
+.cdk-overlay-transparent-backdrop {
+  background-color: transparent;
+}
+
+.ui-toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.ui-toast-container > * {
+  pointer-events: auto;
+}
+
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

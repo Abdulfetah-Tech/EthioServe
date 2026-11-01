@@ -2,6 +2,9 @@
   "plugins": {
     "deploy-on-aws": {
       "enabled": true
+    },
+    "ecc/ecc": {
+      "enabled": true
     }
   }
 }
