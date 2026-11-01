@@ -7,6 +7,7 @@ using EthioServe.API.Realtime;
 using EthioServe.API.Services;
 using EthioServe.Application;
 using EthioServe.Application.Abstractions;
+using EthioServe.Application.Payments;
 using EthioServe.Domain.Common;
 using EthioServe.Infrastructure;
 using EthioServe.Infrastructure.Identity;
@@ -144,7 +145,12 @@ if (applyMigrationsOnStartup)
     await app.Services.InitializeDatabaseAsync();
 }
 
-if (app.Environment.IsDevelopment())
+var hasSeedCredentials =
+    !string.IsNullOrWhiteSpace(builder.Configuration["Seed:AdminEmail"]) &&
+    !string.IsNullOrWhiteSpace(builder.Configuration["Seed:AdminPassword"]) ||
+    !string.IsNullOrWhiteSpace(builder.Configuration["Seed:DemoPassword"]);
+
+if (app.Environment.IsDevelopment() || hasSeedCredentials)
 {
     await AdminBootstrapper.EnsureAdminAsync(app.Services, app.Configuration);
     await DemoDataSeeder.SeedAsync(app.Services, app.Configuration);

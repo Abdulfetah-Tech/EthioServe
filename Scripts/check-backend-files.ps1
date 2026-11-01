@@ -146,6 +146,21 @@ $batches['7.4.1'] = @(
     'EthioServe.Tests\Integration\ExclusiveLockTests.cs'
 )
 
+$batches['8.1'] = @(
+    'EthioServe.Application\Payments\PaymentRules.cs',
+    'EthioServe.Application\Payments\PaymentModels.cs',
+    'EthioServe.Application\Payments\PaymentGateways.cs',
+    'EthioServe.Application\Payments\CustomerPaymentService.cs',
+    'EthioServe.Application\Payments\ProviderPaymentService.cs',
+    'EthioServe.API\Controllers\CustomerPaymentsController.cs',
+    'EthioServe.API\Controllers\ProviderPaymentsController.cs',
+    'EthioServe.Tests\Unit\PaymentDomainTests.cs',
+    'EthioServe.Tests\Unit\PaymentRulesTests.cs',
+    'EthioServe.Tests\Support\PaymentScenario.cs',
+    'EthioServe.Tests\Integration\PaymentApiTests.cs',
+    'EthioServe.Tests\Integration\PaymentConcurrencyTests.cs'
+)
+
 $checked = @()
 foreach ($name in $batches.Keys) {
     $paths = $batches[$name]
